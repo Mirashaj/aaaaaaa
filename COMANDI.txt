@@ -1,0 +1,7 @@
+mvn exec:java -D"exec.mainClass=theknife.server.ServerTK" -D"exec.args=--password strangerthings10"
+
+mvn javafx:run
+
+.\cleanup-fxml-bom.ps1
+
+mvn clean compile
