@@ -1,7 +1,9 @@
 package theknife.client.controller;
 
 import java.io.IOException;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -21,20 +23,22 @@ import javafx.scene.shape.SVGPath;
 import theknife.client.ClientTK;
 import theknife.client.ServerConnection;
 import theknife.client.SessioneCorrente;
-import theknife.model.Ristorante;
+import theknife.model.Prenotazione;
 import theknife.shared.Request;
 import theknife.shared.Response;
 
-public class PreferitiController {
+public class PrenotazioniController {
 
     @FXML private AnchorPane loginGatePanel;
     @FXML private AnchorPane contentPanel;
     @FXML private Button btnAccedi;
     @FXML private Button btnRegistrati;
-    @FXML private TilePane tilePreferiti;
+    @FXML private TilePane tilePrenotazioni;
     @FXML private VBox emptyStateBox;
     @FXML private Label lblError;
     @FXML private MenuButton accountMenuButton;
+
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM uuuu HH:mm", Locale.ITALIAN);
 
     @FXML
     public void initialize() {
@@ -68,94 +72,220 @@ public class PreferitiController {
             contentPanel.setManaged(true);
         }
 
-        // Gestore users are not allowed here — redirect to welcome
         if (SessioneCorrente.getInstance().isGestore()) {
             ClientTK.loadScene("welcome.fxml", "TheKnife - Welcome");
             return;
         }
 
-        loadPreferiti();
-        wrapInScrollPane(tilePreferiti);
+        loadPrenotazioni();
+        wrapInScrollPane(tilePrenotazioni);
     }
 
-    private void loadPreferiti() {
-        lblError.setVisible(false);
+    private void loadPrenotazioni() {
+        if (lblError != null) lblError.setVisible(false);
         new Thread(() -> {
             try {
-                Request req = new Request("VISUALIZZA_PREFERITI");
+                Request req = new Request("VISUALIZZA_PRENOTAZIONI");
                 req.addParametro("idUtente", SessioneCorrente.getInstance().getUtenteLoggato().getId());
                 Response res = ServerConnection.getInstance().send(req);
                 if (res.isSuccesso()) {
                     @SuppressWarnings("unchecked")
-                    List<Ristorante> list = (List<Ristorante>) res.getPayload();
+                    List<Prenotazione> list = (List<Prenotazione>) res.getPayload();
                     Platform.runLater(() -> {
-                        tilePreferiti.getChildren().clear();
+                        tilePrenotazioni.getChildren().clear();
                         if (list == null || list.isEmpty()) {
-                            emptyStateBox.setVisible(true);
-                            emptyStateBox.setManaged(true);
+                            if (emptyStateBox != null) {
+                                emptyStateBox.setVisible(true);
+                                emptyStateBox.setManaged(true);
+                            }
                         } else {
-                            emptyStateBox.setVisible(false);
-                            emptyStateBox.setManaged(false);
-                            list.forEach(r -> tilePreferiti.getChildren().add(createCard(r)));
+                            if (emptyStateBox != null) {
+                                emptyStateBox.setVisible(false);
+                                emptyStateBox.setManaged(false);
+                            }
+                            list.forEach(p -> tilePrenotazioni.getChildren().add(createBookingCard(p)));
                         }
                     });
                 } else {
                     Platform.runLater(() -> { lblError.setText(res.getMessaggio()); lblError.setVisible(true); lblError.setManaged(true); });
                 }
             } catch (IOException | ClassNotFoundException e) {
-                Platform.runLater(() -> { lblError.setText("Errore di connessione"); lblError.setVisible(true); lblError.setManaged(true); });
+                Platform.runLater(() -> { if (lblError != null) { lblError.setText("Errore di connessione"); lblError.setVisible(true); lblError.setManaged(true); } });
             }
         }).start();
     }
 
-    private VBox createCard(Ristorante r) {
-        VBox card = new VBox(8);
-        card.getStyleClass().add("tk-card");
+    private VBox createBookingCard(Prenotazione p) {
+        VBox card = new VBox(10);
+        card.getStyleClass().addAll("tk-review-card", "tk-review-card-detail");
+        card.setPrefWidth(240);
+        card.setPrefHeight(180);
 
-        Label title = new Label(r.getNome());
-        title.getStyleClass().add("tk-card-title");
 
-        Label cuisine = new Label(r.getTipoCucina());
-        cuisine.getStyleClass().add("tk-text-secondary");
-
-        Label rating = new Label(stars((int)Math.round(r.getMediaStelle())));
-        rating.getStyleClass().add("tk-stars");
-
-        HBox actions = new HBox(8);
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-        Button btnRemove = new Button("Delete");
-        btnRemove.getStyleClass().add("tk-btn-primary");
-        btnRemove.setStyle("-fx-background-color: #C0392B; -fx-text-fill: white;");
-        btnRemove.setOnAction(e -> {
-            removePreferito(r.getId(), card);
-        });
-        actions.getChildren().addAll(spacer, btnRemove);
-
-        card.getChildren().addAll(title, cuisine, rating, actions);
-
-        card.setOnMouseClicked(e -> {
+        HBox header = new HBox(10);
+        Label name = new Label(p.getNomeRistorante());
+        name.getStyleClass().add("tk-card-title");
+        name.setOnMouseClicked(e -> {
+            theknife.model.Ristorante r = new theknife.model.Ristorante();
+            r.setId(p.getIdRistorante());
+            r.setNome(p.getNomeRistorante());
             SessioneCorrente.getInstance().setSelectedRistorante(r);
             ClientTK.loadScene("dettaglio_ristorante.fxml", "TheKnife - Dettaglio Ristorante");
         });
 
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        Label date = new Label(p.getDataPrenotazione() != null ? p.getDataPrenotazione().format(formatter) : "");
+        date.getStyleClass().add("tk-text-secondary");
+        header.getChildren().addAll(name, spacer, date);
+
+        Label seats = new Label("Posti: " + p.getPosti());
+        seats.getStyleClass().add("tk-text-secondary");
+
+        HBox actions = new HBox(8);
+        actions.setAlignment(javafx.geometry.Pos.BOTTOM_RIGHT);
+        Button btnEdit = new Button("Modifica");
+        btnEdit.getStyleClass().add("tk-btn-secondary");
+
+        Button btnCancel = new Button("Delete");
+        btnCancel.getStyleClass().add("tk-btn-primary");
+        btnCancel.setStyle("-fx-background-color: #C0392B; -fx-text-fill: white;");
+
+        actions.getChildren().addAll(btnEdit, btnCancel);
+
+        btnCancel.setOnAction(e -> cancelBooking(p.getId(), card));
+
+        btnEdit.setOnAction(e -> showEditBooking(card, p, seats, date));
+
+        Region vSpacer = new Region();
+        vSpacer.setPickOnBounds(false);
+        VBox.setVgrow(vSpacer, Priority.ALWAYS);
+
+        card.getChildren().addAll(header, seats, vSpacer, actions);
         return card;
     }
 
-    private void removePreferito(int idRistorante, VBox card) {
+
+    private void showEditBooking(VBox card, Prenotazione p, Label seatsLabel, Label dateLabel) {
+        card.getChildren().removeIf(n -> n instanceof HBox && ((HBox) n).getUserData() != null && "edit-actions".equals(((HBox) n).getUserData()));
+
+        HBox editor = new HBox(10);
+        editor.setUserData("edit-actions");
+
+        javafx.scene.control.DatePicker datePicker = new javafx.scene.control.DatePicker();
+        if (p.getDataPrenotazione() != null) {
+            datePicker.setValue(p.getDataPrenotazione().toLocalDate());
+        }
+
+        javafx.scene.control.TextField timeField = new javafx.scene.control.TextField();
+        timeField.setPromptText("HH:mm");
+        if (p.getDataPrenotazione() != null) {
+            timeField.setText(String.format("%02d:%02d", p.getDataPrenotazione().getHour(), p.getDataPrenotazione().getMinute()));
+        }
+
+        javafx.scene.control.TextField seatsField = new javafx.scene.control.TextField(String.valueOf(p.getPosti()));
+        seatsField.setPrefWidth(80);
+        seatsField.setPromptText("Posti");
+
+        Button btnSave = new Button("Salva");
+        btnSave.getStyleClass().add("tk-btn-primary");
+
+        Button btnCancelEdit = new Button("Cancel");
+        btnCancelEdit.getStyleClass().add("tk-btn-secondary");
+
+        editor.getChildren().addAll(new Label("Data:"), datePicker, new Label("Ora:"), timeField, new Label("Posti:"), seatsField, btnSave, btnCancelEdit);
+
+        btnCancelEdit.setOnAction(ev -> {
+            card.getChildren().remove(editor);
+        });
+
+        btnSave.setOnAction(ev -> {
+            if (datePicker.getValue() == null) {
+                lblError.setText("Seleziona una data.");
+                lblError.setVisible(true);
+                lblError.setManaged(true);
+                return;
+            }
+
+            String time = timeField.getText() != null ? timeField.getText().trim() : "";
+            java.time.LocalTime localTime;
+            try {
+                localTime = java.time.LocalTime.parse(time);
+            } catch (Exception ex) {
+                lblError.setText("Formato ora non valido (HH:mm).");
+                lblError.setVisible(true);
+                lblError.setManaged(true);
+                return;
+            }
+
+            int newSeats;
+            try {
+                newSeats = Integer.parseInt(seatsField.getText().trim());
+            } catch (Exception ex) {
+                lblError.setText("Posti non validi.");
+                lblError.setVisible(true);
+                lblError.setManaged(true);
+                return;
+            }
+            if (newSeats < 1) {
+                lblError.setText("Posti devono essere >= 1.");
+                lblError.setVisible(true);
+                lblError.setManaged(true);
+                return;
+            }
+
+            java.time.LocalDateTime newDate = java.time.LocalDateTime.of(datePicker.getValue(), localTime);
+            if (newDate.isBefore(java.time.LocalDateTime.now())) {
+                lblError.setText("La data e l'ora devono essere future.");
+                lblError.setVisible(true);
+                lblError.setManaged(true);
+                return;
+            }
+
+            Request req = new Request("MODIFICA_PRENOTAZIONE");
+            req.addParametro("idUtente", SessioneCorrente.getInstance().getUtenteLoggato().getId());
+            req.addParametro("idPrenotazione", p.getId());
+            req.addParametro("dataPrenotazione", newDate);
+            req.addParametro("posti", newSeats);
+            req.addParametro("stato", p.getStato() != null ? p.getStato() : "CONFERMATA");
+
+            new Thread(() -> {
+                try {
+                    Response res = ServerConnection.getInstance().send(req);
+                    if (res.isSuccesso()) {
+                        Platform.runLater(() -> {
+                            card.getChildren().remove(editor);
+                            seatsLabel.setText("Posti: " + newSeats);
+                            dateLabel.setText(newDate.format(formatter));
+                        });
+                    } else {
+                        Platform.runLater(() -> {
+                            lblError.setText(res.getMessaggio());
+                            lblError.setVisible(true);
+                            lblError.setManaged(true);
+                        });
+                    }
+                } catch (IOException | ClassNotFoundException ex) {
+                    Platform.runLater(() -> {
+                        lblError.setText("Errore di connessione");
+                        lblError.setVisible(true);
+                        lblError.setManaged(true);
+                    });
+                }
+            }).start();
+        });
+
+        card.getChildren().add(editor);
+    }
+
+    private void cancelBooking(int idPrenotazione, VBox card) {
         new Thread(() -> {
             try {
-                Request req = new Request("RIMUOVI_PREFERITO");
-                req.addParametro("idUtente", SessioneCorrente.getInstance().getUtenteLoggato().getId());
-                req.addParametro("idRistorante", idRistorante);
+                Request req = new Request("ELIMINA_PRENOTAZIONE");
+                req.addParametro("idPrenotazione", idPrenotazione);
                 Response res = ServerConnection.getInstance().send(req);
                 if (res.isSuccesso()) {
-                    Platform.runLater(() -> {
-                        tilePreferiti.getChildren().remove(card);
-                        boolean empty = tilePreferiti.getChildren().isEmpty();
-                        emptyStateBox.setVisible(empty);
-                        emptyStateBox.setManaged(empty);
-                    });
+                    Platform.runLater(() -> tilePrenotazioni.getChildren().remove(card));
                 } else {
                     Platform.runLater(() -> { lblError.setText(res.getMessaggio()); lblError.setVisible(true); lblError.setManaged(true); });
                 }
@@ -165,11 +295,6 @@ public class PreferitiController {
         }).start();
     }
 
-    private String stars(int value) {
-        StringBuilder b = new StringBuilder();
-        for (int i = 0; i < 5; i++) b.append(i < value ? '★' : '☆');
-        return b.toString();
-    }
 
     private void updateAccountMenu() {
         if (accountMenuButton == null) return;

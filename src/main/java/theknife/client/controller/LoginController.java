@@ -41,6 +41,8 @@ public class LoginController {
         }
 
         try {
+            ServerConnection.init("localhost", 5000);
+
             Request request = new Request("LOGIN");
             request.addParametro("email", email);
             request.addParametro("password", password);
@@ -50,14 +52,10 @@ public class LoginController {
             if (response.isSuccesso()) {
                 Utente utente = (Utente) response.getPayload();
                 System.out.println("Login eseguito: " + utente);
-                
+
                 theknife.client.SessioneCorrente.getInstance().login(utente);
 
-                if ("gestore".equals(utente.getRuolo())) {
-                    ClientTK.loadScene("dashboard_gestore.fxml", "TheKnife - Manager Dashboard");
-                } else {
-                    ClientTK.loadScene("home.fxml", "TheKnife - Home");
-                }
+                ClientTK.loadScene("home.fxml", "TheKnife - Home");
             } else {
                 lblErrore.setText("Invalid credentials.");
             }

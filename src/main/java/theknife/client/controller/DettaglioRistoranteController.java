@@ -1,25 +1,35 @@
 package theknife.client.controller;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.SeparatorMenuItem;
-import javafx.scene.control.Slider;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+import javafx.stage.Window;
 import theknife.client.ClientTK;
 import theknife.client.ServerConnection;
 import theknife.client.SessioneCorrente;
@@ -29,7 +39,7 @@ import theknife.shared.Request;
 import theknife.shared.Response;
 
 /*
- * 
+ *
  * Mirashaj Erik 760453 VA
  * GorchynskYi Igor 757184 VA
  * Kabuka Dan Mumanga 757708 VA
@@ -39,29 +49,32 @@ import theknife.shared.Response;
 
 @SuppressWarnings("unused")
 public class DettaglioRistoranteController {
-    
+
     @FXML private Label lblNome, lblCitta, lblIndirizzo, lblPrezzo, lblCucina, lblDelivery, lblPrenotazione, lblAvgRating, lblReviewCount, lblCoordinate, lblMessaggio, lblVotoSelezionato;
-    @FXML private Label lblCucinaInfo, lblPrezzoInfo, lblDeliveryInfo, lblDescrizioneBrief;
+    @FXML private Label lblAvgRatingTop, lblAvgStarsTop;
+    @FXML private Label lblCucinaInfo, lblPrezzoInfo, lblDeliveryInfo, lblPrenotazioneInfo, lblDescrizioneBrief;
     @FXML private Label lblIndirizzoInfo, lblCittaInfo, lblCucinaInfo2, lblPrezzoInfo2, lblLoginPrompt;
     @FXML private VBox vboxRecensioni;
     @FXML private VBox vboxFormRecensione;
     @FXML private Button btnPreferito;
     @FXML private Button btnPrenota;
-    @FXML private Slider sliderStelle;
+    @FXML private Button star1, star2, star3, star4, star5;
+    @FXML private HBox starsContainer;
     @FXML private TextArea txtTestoRecensione;
     @FXML private MenuButton accountMenuButton;
+    @FXML private Button btnNavHome;
+    @FXML private Button btnNavSecondary;
+    @FXML private Button btnNavThird;
+    @FXML private Button btnNavFourth;
 
+    private int selectedRating = 5;
     private boolean isPreferito = false;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy");
 
     @FXML
     public void initialize() {
-        if (sliderStelle != null && lblVotoSelezionato != null) {
-            lblVotoSelezionato.setText(String.valueOf((int) sliderStelle.getValue()));
-            sliderStelle.valueProperty().addListener((obs, oldValue, newValue) -> lblVotoSelezionato.setText(String.valueOf(newValue.intValue())));
-        }
+        initializeStarButtons();
 
-        
         Ristorante r = SessioneCorrente.getInstance().getSelectedRistorante();
         if (r != null) {
             applyRestaurantToUI(r);
@@ -72,25 +85,67 @@ public class DettaglioRistoranteController {
                 checkPreferito(r.getId());
             }
         }
+        boolean customerActionsVisible = SessioneCorrente.getInstance().isUserLogged() && !SessioneCorrente.getInstance().isGestore();
+
         // Mostra form solo se loggato
         if (vboxFormRecensione != null && lblLoginPrompt != null) {
-            boolean showForm = SessioneCorrente.getInstance().isUserLogged() && !SessioneCorrente.getInstance().isGestore();
-            vboxFormRecensione.setVisible(showForm);
-            vboxFormRecensione.setManaged(showForm);
-            lblLoginPrompt.setVisible(!showForm);
-            lblLoginPrompt.setManaged(!showForm);
-            if (!showForm) {
-                lblLoginPrompt.setText("Accedi per lasciare una recensione");
+            vboxFormRecensione.setVisible(customerActionsVisible);
+            vboxFormRecensione.setManaged(customerActionsVisible);
+            lblLoginPrompt.setVisible(!customerActionsVisible);
+            lblLoginPrompt.setManaged(!customerActionsVisible);
+            if (!customerActionsVisible) {
+                lblLoginPrompt.setText("Log in to leave a review");
             }
         }
-        
-        // Mostra pulsante preferiti sempre
+
+        if (btnPrenota != null) {
+            btnPrenota.setVisible(customerActionsVisible);
+            btnPrenota.setManaged(customerActionsVisible);
+        }
+
         if (btnPreferito != null) {
-            btnPreferito.setDisable(false);
+            btnPreferito.setVisible(customerActionsVisible);
+            btnPreferito.setManaged(customerActionsVisible);
+            btnPreferito.setDisable(!customerActionsVisible);
             btnPreferito.setText("Add to favorites");
             btnPreferito.setOnAction(e -> handlePreferito());
         }
+
         updateAccountMenu();
+        configureNavbar();
+        wrapInScrollPane(vboxRecensioni);
+    }
+
+    private void initializeStarButtons() {
+        if (star1 == null || star2 == null || star3 == null || star4 == null || star5 == null) {
+            return;
+        }
+
+        Button[] stars = {star1, star2, star3, star4, star5};
+        updateStarDisplay(selectedRating);
+
+        for (int i = 0; i < stars.length; i++) {
+            final int starIndex = i + 1;
+            stars[i].setOnAction(e -> {
+                selectedRating = starIndex;
+                updateStarDisplay(starIndex);
+            });
+        }
+    }
+
+    private void updateStarDisplay(int rating) {
+        if (star1 == null || star2 == null || star3 == null || star4 == null || star5 == null) {
+            return;
+        }
+
+        Button[] stars = {star1, star2, star3, star4, star5};
+        for (int i = 0; i < stars.length; i++) {
+            stars[i].setText(i < rating ? "★" : "☆");
+        }
+
+        if (lblVotoSelezionato != null) {
+            lblVotoSelezionato.setText(String.valueOf(rating));
+        }
     }
 
     private void updateAccountMenu() {
@@ -101,15 +156,6 @@ public class DettaglioRistoranteController {
         accountMenuButton.setGraphic(createAccountGraphic());
 
         if (SessioneCorrente.getInstance().isUserLogged()) {
-            MenuItem myAccount = new MenuItem("My Account");
-            myAccount.setOnAction(e -> {
-                if (SessioneCorrente.getInstance().isGestore()) {
-                    ClientTK.loadScene("dashboard_gestore.fxml", "TheKnife - Dashboard");
-                } else {
-                    ClientTK.loadScene("mie_recensioni.fxml", "TheKnife - My Reviews");
-                }
-            });
-
             MenuItem settings = new MenuItem("Settings");
             settings.setOnAction(e -> {
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -125,24 +171,48 @@ public class DettaglioRistoranteController {
                 ClientTK.loadScene("welcome.fxml", "TheKnife - Welcome");
             });
 
-            accountMenuButton.getItems().addAll(myAccount, settings, new SeparatorMenuItem(), logout);
+            accountMenuButton.getItems().addAll(settings, logout);
         } else {
+            MenuItem register = new MenuItem("Register");
+            register.setOnAction(e -> ClientTK.loadScene("registrazione.fxml", "TheKnife - Registration"));
+
             MenuItem login = new MenuItem("Login");
             login.setOnAction(e -> ClientTK.loadScene("login.fxml", "TheKnife - Login"));
 
-            MenuItem register = new MenuItem("Create Account");
-            register.setOnAction(e -> ClientTK.loadScene("registrazione.fxml", "TheKnife - Registration"));
+            MenuItem back = new MenuItem("Back");
+            back.setOnAction(e -> ClientTK.loadScene("welcome.fxml", "TheKnife - Welcome"));
 
-            MenuItem settings = new MenuItem("Settings");
-            settings.setOnAction(e -> {
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("Settings");
-                alert.setHeaderText("Settings");
-                alert.setContentText("Settings are not available yet.");
-                alert.showAndWait();
-            });
+            accountMenuButton.getItems().addAll(register, login, back);
+        }
+    }
 
-            accountMenuButton.getItems().addAll(login, register, new SeparatorMenuItem(), settings);
+    private void configureNavbar() {
+        boolean gestore = SessioneCorrente.getInstance().isGestore();
+
+        if (btnNavHome != null) {
+            btnNavHome.getStyleClass().setAll("tk-nav-item");
+        }
+
+        if (btnNavSecondary != null) {
+            btnNavSecondary.setText(gestore ? "Restaurants" : "Favorites");
+            btnNavSecondary.getStyleClass().setAll("tk-nav-item");
+        }
+
+        if (btnNavThird != null) {
+            btnNavThird.setText(gestore ? "Review" : "Reviews");
+            btnNavThird.getStyleClass().setAll("tk-nav-item");
+        }
+
+        if (btnNavFourth != null) {
+            if (gestore) {
+                btnNavFourth.setVisible(false);
+                btnNavFourth.setManaged(false);
+            } else {
+                btnNavFourth.setVisible(true);
+                btnNavFourth.setManaged(true);
+                btnNavFourth.setText("Bookings");
+                btnNavFourth.getStyleClass().setAll("tk-nav-item");
+            }
         }
     }
 
@@ -252,7 +322,7 @@ public class DettaglioRistoranteController {
             if (r.isDelivery()) {
                 lblDelivery.setVisible(true);
                 lblDelivery.setManaged(true);
-                lblDelivery.setText("Consegna disponibile");
+                lblDelivery.setText("Delivery available");
                 lblDelivery.getStyleClass().setAll("tk-badge", "tk-positive");
             } else {
                 lblDelivery.setVisible(false);
@@ -263,7 +333,7 @@ public class DettaglioRistoranteController {
             if (r.isPrenotazione()) {
                 lblPrenotazione.setVisible(true);
                 lblPrenotazione.setManaged(true);
-                lblPrenotazione.setText("Prenotazione disponibile");
+                lblPrenotazione.setText("Booking available");
                 lblPrenotazione.getStyleClass().setAll("tk-badge", "tk-positive");
             } else {
                 lblPrenotazione.setVisible(false);
@@ -274,11 +344,11 @@ public class DettaglioRistoranteController {
         // Stile pulsante prenotazione
         if (btnPrenota != null) {
             if (r.isPrenotazione()) {
-                btnPrenota.setText("Prenota un tavolo");
+                btnPrenota.setText("Book Now");
                 btnPrenota.setDisable(false);
                 btnPrenota.setStyle("-fx-background-color: #C0392B; -fx-text-fill: white;");
             } else {
-                btnPrenota.setText("Prenotazione non disponibile");
+                btnPrenota.setText("Booking not available");
                 btnPrenota.setDisable(true);
                 btnPrenota.setStyle("-fx-background-color: #2a2a2a; -fx-text-fill: #555555;");
             }
@@ -286,7 +356,12 @@ public class DettaglioRistoranteController {
 
         // Info consegna
         if (lblDeliveryInfo != null) {
-            lblDeliveryInfo.setText(r.isDelivery() ? "Disponibile" : "Non disponibile");
+            lblDeliveryInfo.setText(r.isDelivery() ? "Delivery available" : "Delivery not available");
+        }
+
+        // Info prenotazione nella sezione Services
+        if (lblPrenotazioneInfo != null) {
+            lblPrenotazioneInfo.setText(r.isPrenotazione() ? "Booking available" : "Booking not available");
         }
 
         // Voto e numero recensioni
@@ -298,8 +373,18 @@ public class DettaglioRistoranteController {
             int num = r.getNumRecensioni();
             if (num > 0) lblReviewCount.setText(String.valueOf(num));
         }
+        // top header rating (numeric + stars)
+        if (lblAvgRatingTop != null) {
+            double avg = r.getMediaStelle();
+            if (avg > 0) lblAvgRatingTop.setText(String.format("%.1f", avg));
+            else lblAvgRatingTop.setText("");
+        }
+        if (lblAvgStarsTop != null) {
+            double avg = r.getMediaStelle();
+            lblAvgStarsTop.setText(stars((int) Math.round(avg)));
+        }
     }
-    
+
     private void loadReviews(int ristoranteId) {
         new Thread(() -> {
             try {
@@ -313,6 +398,12 @@ public class DettaglioRistoranteController {
                         double avg = recensioni.stream().mapToInt(Recensione::getStelle).average().orElse(0.0);
                         lblAvgRating.setText(String.format("%.1f / 5.0", avg));
                         lblReviewCount.setText(String.valueOf(recensioni.size()));
+                            if (lblAvgRatingTop != null) {
+                                lblAvgRatingTop.setText(String.format("%.1f", avg));
+                            }
+                            if (lblAvgStarsTop != null) {
+                                lblAvgStarsTop.setText(stars((int) Math.round(avg)));
+                            }
                         if (vboxRecensioni != null) {
                             vboxRecensioni.getChildren().setAll(recensioni.stream().map(this::createReviewCard).toList());
                         }
@@ -336,7 +427,7 @@ public class DettaglioRistoranteController {
             }
         }).start();
     }
-    
+
     @FXML private void handleAnnullaRecensione() {
         if (vboxFormRecensione != null) {
             vboxFormRecensione.setVisible(false);
@@ -344,6 +435,12 @@ public class DettaglioRistoranteController {
         }
         if (lblMessaggio != null) {
             lblMessaggio.setText("Review cancelled.");
+        }
+        // Reset stars and text
+        selectedRating = 5;
+        updateStarDisplay(5);
+        if (txtTestoRecensione != null) {
+            txtTestoRecensione.clear();
         }
     }
 
@@ -354,15 +451,15 @@ public class DettaglioRistoranteController {
                 return;
             }
             Ristorante r = SessioneCorrente.getInstance().getSelectedRistorante();
-            int stelle = sliderStelle != null ? (int) sliderStelle.getValue() : 5;
+            int stelle = selectedRating;
             String testo = txtTestoRecensione != null ? txtTestoRecensione.getText() : "";
-            
+
             Request req = new Request("AGGIUNGI_RECENSIONE");
             req.addParametro("idUtente", SessioneCorrente.getInstance().getUtenteLoggato().getId());
             req.addParametro("idRistorante", r.getId());
             req.addParametro("stelle", stelle);
             req.addParametro("testo", testo);
-            
+
             Response res = ServerConnection.getInstance().send(req);
             if (res.isSuccesso()) {
                 if (vboxFormRecensione != null) {
@@ -395,33 +492,225 @@ public class DettaglioRistoranteController {
     private void handleHome() {
         ClientTK.loadScene("home.fxml", "TheKnife - Home");
     }
-    
+
     @FXML
     private void handlePreferiti() {
+        if (SessioneCorrente.getInstance().isGestore()) {
+            ClientTK.loadScene("dashboard_gestore.fxml", "TheKnife - Dashboard");
+            return;
+        }
         ClientTK.loadScene("preferiti.fxml", "TheKnife - Favorites");
     }
 
     @FXML
     private void handleMieRecensioni() {
+        if (SessioneCorrente.getInstance().isGestore()) {
+            ClientTK.loadScene("gestione_recensioni.fxml", "TheKnife - Review Management");
+            return;
+        }
         ClientTK.loadScene("mie_recensioni.fxml", "TheKnife - My Reviews");
     }
 
-    @FXML private void handlePrenota() {
-        Ristorante r = SessioneCorrente.getInstance().getSelectedRistorante();
-        if (r == null) {
-            return;
-        }
-        if (!r.isPrenotazione()) {
-            if (lblMessaggio != null) {
-                lblMessaggio.setText("Booking is not available for this restaurant.");
+    @FXML
+    private void handleAggiungiRecensione() {
+        if (!SessioneCorrente.getInstance().isUserLogged()) {
+            if (lblLoginPrompt != null) {
+                lblLoginPrompt.setText("Log in to leave a review");
             }
             return;
         }
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Booking");
-        alert.setHeaderText("Booking available");
-        alert.setContentText("This restaurant accepts bookings. Booking flow will be added here.");
-        alert.showAndWait();
+        if (vboxFormRecensione != null) {
+            vboxFormRecensione.setVisible(true);
+            vboxFormRecensione.setManaged(true);
+        }
+    }
+
+    @FXML
+    private void handlePrenotazioni() {
+        if (SessioneCorrente.getInstance().isGestore()) {
+            ClientTK.loadScene("dashboard_gestore.fxml", "TheKnife - Dashboard");
+            return;
+        }
+        ClientTK.loadScene("prenotazioni.fxml", "TheKnife - Bookings");
+    }
+
+    @FXML private void handlePrenota() {
+        if (!SessioneCorrente.getInstance().isUserLogged()) {
+            if (lblMessaggio != null) lblMessaggio.setText("Please login to make a booking.");
+            return;
+        }
+        if (SessioneCorrente.getInstance().isGestore()) {
+            if (lblMessaggio != null) lblMessaggio.setText("Gestores cannot make bookings.");
+            return;
+        }
+
+        Ristorante r = SessioneCorrente.getInstance().getSelectedRistorante();
+        if (r == null) return;
+        if (!r.isPrenotazione()) {
+            if (lblMessaggio != null) lblMessaggio.setText("Booking is not available for this restaurant.");
+            return;
+        }
+
+        showBookingWindow(r);
+    }
+
+    private void showBookingWindow(Ristorante ristorante) {
+        Stage dialog = new Stage(StageStyle.UNDECORATED);
+        Window owner = btnPrenota != null && btnPrenota.getScene() != null ? btnPrenota.getScene().getWindow() : null;
+        if (owner != null) {
+            dialog.initOwner(owner);
+        }
+        dialog.initModality(Modality.WINDOW_MODAL);
+        dialog.setTitle("New booking");
+        dialog.setResizable(false);
+
+        VBox card = new VBox(16);
+        card.setMaxWidth(Double.MAX_VALUE);
+        card.setPrefWidth(500);
+        card.getStyleClass().add("tk-card");
+        card.setPadding(new Insets(20));
+
+        Label title = new Label("Book " + safeText(ristorante.getNome()));
+        title.getStyleClass().add("tk-section-title");
+        title.setWrapText(true);
+
+        Label subtitle = new Label("Enter date, time and number of people.");
+        subtitle.getStyleClass().add("tk-text-secondary");
+        subtitle.setWrapText(true);
+
+        DatePicker datePicker = new DatePicker(LocalDate.now());
+        datePicker.getStyleClass().add("tk-input");
+        datePicker.setMaxWidth(Double.MAX_VALUE);
+
+        TextField timeField = new TextField(LocalTime.now().plusHours(1).withMinute(0).withSecond(0).withNano(0).format(DateTimeFormatter.ofPattern("HH:mm")));
+        timeField.setPromptText("HH:mm");
+        timeField.getStyleClass().add("tk-input");
+        timeField.setMaxWidth(Double.MAX_VALUE);
+
+        TextField peopleField = new TextField("2");
+        peopleField.setPromptText("Number of people");
+        peopleField.getStyleClass().add("tk-input");
+        peopleField.setMaxWidth(Double.MAX_VALUE);
+
+        VBox dateBox = buildBookingField("Date", datePicker);
+        VBox timeBox = buildBookingField("Time", timeField);
+        VBox peopleBox = buildBookingField("Number of people", peopleField);
+
+        Label statusLabel = new Label();
+        statusLabel.getStyleClass().add("tk-text-secondary");
+        statusLabel.setStyle("-fx-text-fill: #ff9b9b;");
+        statusLabel.setWrapText(true);
+        statusLabel.setVisible(false);
+        statusLabel.setManaged(false);
+
+        Button btnIndietro = new Button("Back");
+        btnIndietro.getStyleClass().add("tk-btn-secondary");
+        btnIndietro.setOnAction(e -> dialog.close());
+
+        Button btnConferma = new Button("Confirm");
+        btnConferma.getStyleClass().add("tk-btn-primary");
+        btnConferma.setOnAction(e -> {
+            LocalDate data = datePicker.getValue();
+            if (data == null) {
+                showBookingStatus(statusLabel, "Please select a valid date.");
+                return;
+            }
+
+            LocalTime ora;
+            try {
+                ora = LocalTime.parse(timeField.getText().trim(), DateTimeFormatter.ofPattern("HH:mm"));
+            } catch (DateTimeParseException ex) {
+                showBookingStatus(statusLabel, "Please enter a valid time in HH:mm format.");
+                return;
+            }
+
+            int numeroPersone;
+            try {
+                numeroPersone = Integer.parseInt(peopleField.getText().trim());
+            } catch (NumberFormatException ex) {
+                showBookingStatus(statusLabel, "Please enter a valid number of people.");
+                return;
+            }
+
+            if (numeroPersone <= 0) {
+                showBookingStatus(statusLabel, "Number of people must be greater than zero.");
+                return;
+            }
+
+            LocalDateTime dataPrenotazione = LocalDateTime.of(data, ora);
+            if (dataPrenotazione.isBefore(LocalDateTime.now())) {
+                showBookingStatus(statusLabel, "Date and time must be in the future.");
+                return;
+            }
+
+            btnConferma.setDisable(true);
+            showBookingStatus(statusLabel, "Saving...");
+            submitBooking(ristorante, dataPrenotazione, numeroPersone, dialog, statusLabel, btnConferma);
+        });
+
+        HBox buttons = new HBox(10, btnIndietro, btnConferma);
+        buttons.setAlignment(Pos.CENTER_RIGHT);
+
+        card.getChildren().addAll(title, subtitle, dateBox, timeBox, peopleBox, statusLabel, buttons);
+
+        StackPane root = new StackPane(card);
+        root.getStyleClass().add("tk-root");
+        StackPane.setMargin(card, new Insets(8));
+
+        Scene scene = new Scene(root, 500, 420);
+        // fai espandere la card per occupare la maggior parte della larghezza della finestra e evitare barre laterali visibili
+        card.prefWidthProperty().bind(scene.widthProperty().subtract(48));
+        scene.getStylesheets().add(ClientTK.class.getResource("/theknife/styles/theme.css").toExternalForm());
+        dialog.setScene(scene);
+        dialog.setOnShown(e -> dialog.centerOnScreen());
+        dialog.showAndWait();
+    }
+
+    private VBox buildBookingField(String labelText, javafx.scene.Node control) {
+        Label label = new Label(labelText);
+        label.getStyleClass().add("tk-text-secondary");
+
+        VBox box = new VBox(6, label, control);
+        box.setFillWidth(true);
+        return box;
+    }
+
+    private void showBookingStatus(Label statusLabel, String message) {
+        if (statusLabel == null) {
+            return;
+        }
+        statusLabel.setText(message);
+        statusLabel.setVisible(true);
+        statusLabel.setManaged(true);
+    }
+
+    private void submitBooking(Ristorante ristorante, LocalDateTime dataPrenotazione, int posti, Stage dialog, Label statusLabel, Button btnConferma) {
+        new Thread(() -> {
+            try {
+                Request req = new Request("AGGIUNGI_PRENOTAZIONE");
+                req.addParametro("idUtente", SessioneCorrente.getInstance().getUtenteLoggato().getId());
+                req.addParametro("idRistorante", ristorante.getId());
+                req.addParametro("dataPrenotazione", dataPrenotazione);
+                req.addParametro("posti", posti);
+                req.addParametro("stato", "CONFERMATA");
+
+                Response res = ServerConnection.getInstance().send(req);
+                Platform.runLater(() -> {
+                    if (res.isSuccesso()) {
+                        if (lblMessaggio != null) lblMessaggio.setText("Booking confirmed.");
+                        dialog.close();
+                    } else {
+                        showBookingStatus(statusLabel, res.getMessaggio());
+                        btnConferma.setDisable(false);
+                    }
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    showBookingStatus(statusLabel, "Error: " + e.getMessage());
+                    btnConferma.setDisable(false);
+                });
+            }
+        }).start();
     }
 
     private void togglePreferito() {
@@ -431,7 +720,7 @@ public class DettaglioRistoranteController {
             Request req = new Request(command);
             req.addParametro("idUtente", SessioneCorrente.getInstance().getUtenteLoggato().getId());
             req.addParametro("idRistorante", r.getId());
-            
+
             Response res = ServerConnection.getInstance().send(req);
             if (res.isSuccesso()) {
                 isPreferito = !isPreferito;
@@ -444,14 +733,16 @@ public class DettaglioRistoranteController {
             System.err.println("Errore nella modifica dei preferiti: " + e.getMessage());
         }
     }
-    
+
     @FXML private void handleIndietro() {
         ClientTK.loadScene("home.fxml", "TheKnife - Home");
     }
 
     private VBox createReviewCard(Recensione recensione) {
         VBox card = new VBox(8);
-        card.getStyleClass().add("tk-review-card");
+        // Usa tk-card per lo stile di base e separa dal layout delle pagine recensione
+        card.getStyleClass().addAll("tk-card", "tk-review-card-detail");
+        card.setMaxWidth(Double.MAX_VALUE);
 
         HBox header = new HBox(10);
         Label avatar = new Label(initials(recensione.getNomeUtente()));
@@ -548,5 +839,37 @@ public class DettaglioRistoranteController {
 
     private String safeText(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private void wrapInScrollPane(javafx.scene.Node node) {
+        Platform.runLater(() -> {
+            if (!(node instanceof javafx.scene.control.ScrollPane) && node != null && node.getParent() instanceof javafx.scene.layout.Pane parent) {
+                int index = parent.getChildren().indexOf(node);
+                if (index < 0) return;
+
+                parent.getChildren().remove(node);
+                javafx.scene.control.ScrollPane sp = new javafx.scene.control.ScrollPane();
+                sp.setFitToWidth(true);
+                sp.setStyle("-fx-background: transparent; -fx-background-color: transparent; -fx-padding: 0;");
+                sp.setHbarPolicy(javafx.scene.control.ScrollPane.ScrollBarPolicy.NEVER);
+
+                if (parent instanceof javafx.scene.layout.VBox) {
+                    javafx.scene.layout.Priority vgrow = javafx.scene.layout.VBox.getVgrow(node);
+                    javafx.scene.layout.VBox.setVgrow(sp, vgrow != null ? vgrow : javafx.scene.layout.Priority.ALWAYS);
+                } else if (parent instanceof javafx.scene.layout.AnchorPane) {
+                    Double top = javafx.scene.layout.AnchorPane.getTopAnchor(node);
+                    if (top != null) javafx.scene.layout.AnchorPane.setTopAnchor(sp, top);
+                    Double bottom = javafx.scene.layout.AnchorPane.getBottomAnchor(node);
+                    if (bottom != null) javafx.scene.layout.AnchorPane.setBottomAnchor(sp, bottom);
+                    Double left = javafx.scene.layout.AnchorPane.getLeftAnchor(node);
+                    if (left != null) javafx.scene.layout.AnchorPane.setLeftAnchor(sp, left);
+                    Double right = javafx.scene.layout.AnchorPane.getRightAnchor(node);
+                    if (right != null) javafx.scene.layout.AnchorPane.setRightAnchor(sp, right);
+                }
+
+                sp.setContent(node);
+                parent.getChildren().add(index, sp);
+            }
+        });
     }
 }

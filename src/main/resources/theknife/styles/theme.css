@@ -221,6 +221,13 @@
     -fx-text-fill: #f4f4f4;
 }
 
+.tk-section-separator {
+    -fx-background-color: white;
+    -fx-min-height: 1px;
+    -fx-pref-height: 1px;
+    -fx-max-height: 1px;
+}
+
 .tk-text-secondary {
     -fx-text-fill: #a0a0a0;
     -fx-font-size: 14px;
@@ -454,16 +461,22 @@
     -fx-border-radius: 12;
     -fx-background-radius: 12;
     -fx-padding: 16;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.28), 18, 0.12, 0, 6);
+    -fx-effect: none;
 }
 
 .tk-card:hover {
-    -fx-border-color: rgba(255,94,77,0.6);
-    -fx-background-color: rgba(255,255,255,0.045);
+    -fx-border-color: rgba(255,255,255,0.08);
+    -fx-background-color: rgba(255,255,255,0.035);
 }
 
 .tk-card-title {
     -fx-font-size: 18px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #f6f6f6;
+}
+
+.tk-card-title-white {
+    -fx-font-size: 26px;
     -fx-font-weight: 900;
     -fx-text-fill: #f6f6f6;
 }
@@ -486,6 +499,35 @@
     -fx-font-size: 13px;
     -fx-font-weight: 800;
     -fx-translate-x: 3px;
+}
+
+.tk-stars-white {
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 28px;
+    -fx-font-weight: 800;
+    -fx-translate-x: 3px;
+    -fx-translate-y: -2px;
+}
+
+.tk-star-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #ff735f;
+    -fx-font-size: 24px;
+    -fx-font-weight: 800;
+    -fx-cursor: hand;
+    -fx-padding: 0 4 0 4;
+    -fx-border-color: #C0392B;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-padding: 2 6 2 6;
+}
+
+.tk-star-button:hover {
+    -fx-text-fill: #ff9b7f;
+}
+
+.tk-star-button:pressed {
+    -fx-text-fill: #ff6347;
 }
 
 .tk-star-half {
@@ -587,6 +629,15 @@
     -fx-pref-width: 300px;
 }
 
+.tk-owner-form-card {
+    -fx-background-color: rgba(255,255,255,0.035);
+    -fx-background-radius: 18;
+    -fx-border-radius: 18;
+    -fx-border-color: rgba(255,255,255,0.08);
+    -fx-border-width: 1;
+    -fx-padding: 18;
+}
+
 /* Register-specific styles */
 .tk-register-card {
     -fx-pref-width: 520px;
@@ -600,17 +651,19 @@
 
 .tk-register-panel {
     -fx-background-color: rgba(255,255,255,0.03);
-    -fx-background-radius: 10;
+    -fx-background-radius: 14;
     -fx-border-color: rgba(255,255,255,0.08);
     -fx-border-width: 0.5;
-    -fx-border-radius: 10;
+    -fx-border-radius: 14;
     -fx-padding: 18;
+    -fx-cursor: hand;
 }
 
 .tk-form-title {
     -fx-font-size: 22px;
     -fx-font-weight: 500;
     -fx-text-fill: #EEEEEE;
+    -fx-cursor: hand;
 }
 
 .tk-form-subtitle {
@@ -665,6 +718,8 @@
     -fx-border-radius: 14;
     -fx-background-radius: 14;
     -fx-padding: 18;
+    -fx-cursor: hand;
+
 }
 
 .tk-metric-card {
@@ -691,7 +746,10 @@
     -fx-border-radius: 18;
     -fx-border-color: rgba(255,255,255,0.08);
     -fx-border-width: 1;
-    -fx-padding: 16;
+    -fx-padding: 20;
+    -fx-min-height: 220;
+    -fx-pref-height: 240;
+    -fx-max-height: 280;
 }
 
 .tk-review-card:hover {
@@ -786,5 +844,71 @@
 
 .scroll-pane > .viewport {
     -fx-background-color: transparent;
+}
+
+.tk-login-gate-overlay {
+    -fx-background-color: linear-gradient(to bottom right, rgba(255,255,255,0.015), rgba(255,255,255,0.03));
+}
+
+.tk-login-gate-card {
+    -fx-padding: 28 24 28 24;
+}
+
+.tk-login-gate-lock-box {
+    -fx-min-width: 96px;
+    -fx-min-height: 96px;
+    -fx-max-width: 96px;
+    -fx-max-height: 96px;
+    -fx-background-color: rgba(0,0,0,0.25);
+    -fx-background-radius: 16;
+    -fx-border-color: rgba(255,255,255,0.08);
+    -fx-border-radius: 16;
+}
+
+.tk-login-gate-lock-icon {
+    -fx-scale-x: 1;
+    -fx-scale-y: 1;
+    -fx-fill: transparent;
+    -fx-stroke: #f4f4f4;
+    -fx-stroke-width: 1.8;
+    -fx-stroke-linecap: round;
+    -fx-stroke-linejoin: round;
+}
+
+.tk-login-gate-title {
+    -fx-font-size: 38px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #f4f4f4;
+    -fx-alignment: center;
+    -fx-text-alignment: center;
+}
+
+.tk-login-gate-subtitle {
+    -fx-font-size: 20px;
+    -fx-font-weight: 500;
+    -fx-text-fill: #bbbbbb;
+    -fx-alignment: center;
+    -fx-text-alignment: center;
+}
+
+.tk-login-gate-btn {
+    -fx-background-color: transparent;
+    -fx-border-color: rgba(255,255,255,0.24);
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-text-fill: #f4f4f4;
+    -fx-font-size: 18px;
+    -fx-font-weight: 800;
+    -fx-padding: 10 24 10 24;
+    -fx-cursor: hand;
+}
+
+.tk-login-gate-btn:hover {
+    -fx-background-color: rgba(255,255,255,0.06);
+    -fx-border-color: rgba(255,255,255,0.36);
+}
+
+.tk-login-gate-btn:pressed {
+    -fx-background-color: rgba(255,255,255,0.12);
 }
 

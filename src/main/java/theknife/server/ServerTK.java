@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /*
- * 
+ *
  * Mirashaj Erik 760453 VA
  * GorchynskYi Igor 757184 VA
  * Kabuka Dan Mumanga 757708 VA
@@ -33,8 +33,8 @@ public class ServerTK {
     /**
      * Inizializza il server sulla porta specificata.
      *
-     * @param porta 
-     * @throws IOException 
+     * @param porta
+     * @throws IOException
      */
     public ServerTK(int porta) throws IOException {
         this.serverSocket = new ServerSocket(porta);
@@ -81,11 +81,11 @@ public class ServerTK {
     /**
      * Metodo main - inizializza il server con parametri da riga di comando o GUI.
      *
-     * @param args 
+     * @param args
      */
     public static void main(String[] args) {
         String host = "localhost";
-        String dbName = "dbTK";
+        String dbName = "dbtk";
         String user = "postgres";
         String password = "postgres";
         int porta = DEFAULT_PORT;
@@ -126,7 +126,7 @@ public class ServerTK {
             DatabaseConnection.init(host, dbName, user, password);
             System.out.println("Connessione al database inizializzata.");
 
-            // Avvia il backfill in background
+            // Avvia il backfill in background senza bloccare il server
             Thread backfillThread = new Thread(() -> backfillRestaurantDescriptions());
             backfillThread.setDaemon(true);
             backfillThread.start();
@@ -147,14 +147,14 @@ public class ServerTK {
             e.printStackTrace();
         }
     }
-    
+
     private static void backfillRestaurantDescriptions() {
         Path csvPath = Paths.get("sql", "michelin_my_maps.csv");
 
-        // Registra solo i problemi
+        // Log minimo: solo errori o riepilogo breve.
         if (!Files.exists(csvPath)) {
-            System.out.println("Backfill: CSV non trovato. Salto.");
-            // Controlla percorsi alternativi
+            System.out.println("Backfill: CSV not found at " + csvPath.toAbsolutePath() + ". Skipping backfill.");
+            // Prova percorsi alternativi solo per diagnosi
             Path altPath1 = Paths.get(".", "sql", "michelin_my_maps.csv");
             Path altPath2 = Paths.get("..", "sql", "michelin_my_maps.csv");
             if (Files.exists(altPath1) || Files.exists(altPath2)) {
@@ -211,7 +211,7 @@ public class ServerTK {
                 }
 
                 if (toProcess == 0 && skipped == 0) {
-                    // Nulla da fare
+                    // Niente da fare, resta silenzioso
                     return;
                 }
 

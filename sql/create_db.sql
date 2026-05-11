@@ -19,7 +19,7 @@ CREATE TABLE RistorantiTheKnife (
     indirizzo       VARCHAR(255) NOT NULL,
     latitudine      DECIMAL(10, 7) NOT NULL,
     longitudine     DECIMAL(10, 7) NOT NULL,
-    prezzo_medio    DECIMAL(8, 2),           
+    prezzo_medio    DECIMAL(8, 2),
     delivery        BOOLEAN NOT NULL DEFAULT FALSE,
     prenotazione    BOOLEAN NOT NULL DEFAULT FALSE,
     tipo_cucina     VARCHAR(100),
@@ -52,4 +52,14 @@ CREATE TABLE Preferiti (
     id_utente       INTEGER NOT NULL REFERENCES Utenti(id) ON DELETE CASCADE,
     id_ristorante   INTEGER NOT NULL REFERENCES RistorantiTheKnife(id) ON DELETE CASCADE,
     PRIMARY KEY (id_utente, id_ristorante)
+);
+
+-- Creazione tabella Prenotazioni
+CREATE TABLE Prenotazioni (
+    id                SERIAL PRIMARY KEY,
+    id_utente         INTEGER NOT NULL REFERENCES Utenti(id) ON DELETE CASCADE,
+    id_ristorante     INTEGER NOT NULL REFERENCES RistorantiTheKnife(id) ON DELETE CASCADE,
+    data_prenotazione TIMESTAMP, -- data e ora della prenotazione
+    posti             INTEGER NOT NULL DEFAULT 1,
+    stato             VARCHAR(30) NOT NULL DEFAULT 'CONFERMATA'
 );

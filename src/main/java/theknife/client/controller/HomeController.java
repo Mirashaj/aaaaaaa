@@ -12,7 +12,6 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
@@ -28,7 +27,7 @@ import theknife.shared.Request;
 import theknife.shared.Response;
 
 /*
- * 
+ *
  * Mirashaj Erik 760453 VA
  * GorchynskYi Igor 757184 VA
  * Kabuka Dan Mumanga 757708 VA
@@ -94,8 +93,19 @@ public class HomeController {
     @FXML
     private MenuButton accountMenuButton;
 
+    @FXML
+    private Button btnNavHome;
+
+    @FXML
+    private Button btnNavSecondary;
+
+    @FXML
+    private Button btnNavThird;
+
+    @FXML
+    private Button btnNavFourth;
+
     private final List<Ristorante> risultatiCorrenti = new ArrayList<>();
-    private int risultatiMostrati = 0;
 
     @FXML
     public void initialize() {
@@ -108,7 +118,10 @@ public class HomeController {
             );
         }
 
-        if (SessioneCorrente.getInstance().isUserLogged()) {
+        String cittaGuest = SessioneCorrente.getInstance().getCittaGuest();
+        if (cittaGuest != null && !cittaGuest.isEmpty()) {
+            txtRicerca.setText(cittaGuest);
+        } else if (SessioneCorrente.getInstance().isUserLogged()) {
             String dom = SessioneCorrente.getInstance().getUtenteLoggato().getDomicilio();
             if (dom != null && !dom.isEmpty()) {
                 txtRicerca.setText(dom);
@@ -116,15 +129,15 @@ public class HomeController {
         }
 
         updateAccountMenu();
-        
+        configureNavbar();
+
         handleCerca();
 
         if (filterMenu != null) {
             filterMenu.setVisible(false);
             filterMenu.setManaged(false);
         }
-
-        refreshLoadMoreButton();
+        wrapInScrollPane(flowRistoranti);
     }
 
     private void updateAccountMenu() {
@@ -137,27 +150,54 @@ public class HomeController {
         accountMenuButton.setGraphic(createAccountGraphic());
 
         if (SessioneCorrente.getInstance().isUserLogged()) {
-            MenuItem myAccount = new MenuItem("My Account");
-            myAccount.setOnAction(e -> handleMyAccount());
-
             MenuItem settings = new MenuItem("Settings");
             settings.setOnAction(e -> handleSettings());
 
             MenuItem logout = new MenuItem("Logout");
             logout.setOnAction(e -> handleLogout());
 
-            accountMenuButton.getItems().addAll(myAccount, settings, new SeparatorMenuItem(), logout);
+            accountMenuButton.getItems().addAll(settings, logout);
         } else {
+            MenuItem register = new MenuItem("Register");
+            register.setOnAction(e -> handleRegister());
+
             MenuItem login = new MenuItem("Login");
             login.setOnAction(e -> handleLogin());
 
-            MenuItem register = new MenuItem("Create Account");
-            register.setOnAction(e -> handleRegister());
+            MenuItem back = new MenuItem("Back");
+            back.setOnAction(e -> handleBack());
 
-            MenuItem settings = new MenuItem("Settings");
-            settings.setOnAction(e -> handleSettings());
+            accountMenuButton.getItems().addAll(register, login, back);
+        }
+    }
 
-            accountMenuButton.getItems().addAll(login, register, new SeparatorMenuItem(), settings);
+    private void configureNavbar() {
+        boolean gestore = SessioneCorrente.getInstance().isGestore();
+
+        if (btnNavHome != null) {
+            btnNavHome.getStyleClass().setAll("tk-nav-active");
+        }
+
+        if (btnNavSecondary != null) {
+            btnNavSecondary.setText(gestore ? "Restaurants" : "Favorites");
+            btnNavSecondary.getStyleClass().setAll("tk-nav-item");
+        }
+
+        if (btnNavThird != null) {
+            btnNavThird.setText(gestore ? "Review" : "Reviews");
+            btnNavThird.getStyleClass().setAll("tk-nav-item");
+        }
+
+        if (btnNavFourth != null) {
+            if (gestore) {
+                btnNavFourth.setVisible(false);
+                btnNavFourth.setManaged(false);
+            } else {
+                btnNavFourth.setVisible(true);
+                btnNavFourth.setManaged(true);
+                btnNavFourth.setText("Bookings");
+                btnNavFourth.getStyleClass().setAll("tk-nav-item");
+            }
         }
     }
 
@@ -168,12 +208,12 @@ public class HomeController {
         svgPath.setScaleX(1);
         svgPath.setScaleY(1);
         svgPath.getStyleClass().add("tk-account-menu-icon");
-        
+
         StackPane icon = new StackPane(svgPath);
         icon.setPrefSize(18, 18);
         icon.setMinSize(18, 18);
         icon.setMaxSize(18, 18);
-        
+
         HBox box = new HBox(icon);
         box.setAlignment(Pos.CENTER);
         return box;
@@ -209,6 +249,11 @@ public class HomeController {
     }
 
     @FXML
+    private void handleBack() {
+        ClientTK.loadScene("welcome.fxml", "TheKnife - Welcome");
+    }
+
+    @FXML
     private void handleSettings() {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Settings");
@@ -217,6 +262,14 @@ public class HomeController {
         alert.showAndWait();
     }
 
+    @FXML
+    private void handlePrenotazioni() {
+        if (SessioneCorrente.getInstance().isGestore()) {
+            ClientTK.loadScene("dashboard_gestore.fxml", "TheKnife - Dashboard");
+            return;
+        }
+        ClientTK.loadScene("prenotazioni.fxml", "TheKnife - Bookings");
+    }
     @FXML
     private void handleToggleFilters() {
         if (filterMenu == null) return;
@@ -227,6 +280,14 @@ public class HomeController {
 
     @FXML
     private void handleCerca() {
+        risultatiCorrenti.clear();
+        if (flowRistoranti != null) {
+            flowRistoranti.getChildren().clear();
+        }
+        eseguiRicerca(0);
+    }
+
+    private void eseguiRicerca(int offset) {
         String luogo = txtRicerca.getText().trim();
             String cucinaVal = (txtCucina != null) ? txtCucina.getText().trim() : "";
             String prezzoMinStr = (txtPrezzoMin != null) ? txtPrezzoMin.getText().trim() : "";
@@ -237,9 +298,6 @@ public class HomeController {
             double stelleMin = sliderStelle != null ? sliderStelle.getValue() : 0.0;
 
             lblMessaggio.setText("Ricerca in corso...");
-        if (flowRistoranti != null) {
-            flowRistoranti.getChildren().clear();
-        }
 
         try {
             Request request = new Request("CERCA_RISTORANTE");
@@ -290,15 +348,16 @@ public class HomeController {
                 }
             }
 
+            request.addParametro("limite", RESULTS_PER_PAGE);
+            request.addParametro("offset", offset);
+
             Response response = ServerConnection.getInstance().send(request);
 
             if (response.isSuccesso()) {
                 List<Ristorante> risultati = (List<Ristorante>) response.getPayload();
-                risultatiCorrenti.clear();
                 risultatiCorrenti.addAll(risultati);
-                risultatiMostrati = 0;
-                renderVisibleResults();
-                lblMessaggio.setText(risultati.size() + " restaurants found.");
+                renderVisibleResults(risultati);
+                lblMessaggio.setText(risultatiCorrenti.size() + " restaurants loaded.");
             } else {
                 lblMessaggio.setText("Error: " + response.getMessaggio());
                 if (flowRistoranti != null) {
@@ -316,45 +375,31 @@ public class HomeController {
 
     @FXML
     private void handleLoadMore() {
-        if (risultatiCorrenti.isEmpty()) {
-            return;
-        }
-        renderMoreResults();
+        eseguiRicerca(risultatiCorrenti.size());
     }
 
-    private void renderVisibleResults() {
+    private void renderVisibleResults(List<Ristorante> nuoviRisultati) {
         if (flowRistoranti == null) {
             return;
         }
 
-        flowRistoranti.getChildren().clear();
         if (risultatiCorrenti.isEmpty()) {
             flowRistoranti.getChildren().add(createEmptyState("No restaurants found", "Try widening your filters or clearing the price range."));
-            refreshLoadMoreButton();
+            refreshLoadMoreButton(0);
             return;
         }
 
-        renderMoreResults();
+        for (Ristorante r : nuoviRisultati) {
+            flowRistoranti.getChildren().add(createRestaurantCard(r));
+        }
+        refreshLoadMoreButton(nuoviRisultati.size());
     }
 
-    private void renderMoreResults() {
-        if (flowRistoranti == null) {
-            return;
-        }
-
-        int nextLimit = Math.min(risultatiCorrenti.size(), risultatiMostrati + RESULTS_PER_PAGE);
-        for (int i = risultatiMostrati; i < nextLimit; i++) {
-            flowRistoranti.getChildren().add(createRestaurantCard(risultatiCorrenti.get(i)));
-        }
-        risultatiMostrati = nextLimit;
-        refreshLoadMoreButton();
-    }
-
-    private void refreshLoadMoreButton() {
+    private void refreshLoadMoreButton(int addedCount) {
         if (btnCaricaAltro == null) {
             return;
         }
-        boolean hasMore = !risultatiCorrenti.isEmpty() && risultatiMostrati < risultatiCorrenti.size();
+        boolean hasMore = addedCount == RESULTS_PER_PAGE;
         btnCaricaAltro.setVisible(hasMore);
         btnCaricaAltro.setManaged(hasMore);
     }
@@ -531,11 +576,19 @@ public class HomeController {
 
     @FXML
     private void handlePreferiti() {
+        if (SessioneCorrente.getInstance().isGestore()) {
+            ClientTK.loadScene("dashboard_gestore.fxml", "TheKnife - Dashboard");
+            return;
+        }
         ClientTK.loadScene("preferiti.fxml", "TheKnife - Favorites");
     }
 
     @FXML
     private void handleMieRecensioni() {
+        if (SessioneCorrente.getInstance().isGestore()) {
+            ClientTK.loadScene("gestione_recensioni.fxml", "TheKnife - Review Management");
+            return;
+        }
         ClientTK.loadScene("mie_recensioni.fxml", "TheKnife - My Reviews");
     }
 
@@ -546,11 +599,43 @@ public class HomeController {
 
     @FXML
     private void handleIndietro() {
-        if (SessioneCorrente.getInstance().isUserLogged() && 
+        if (SessioneCorrente.getInstance().isUserLogged() &&
             "gestore".equals(SessioneCorrente.getInstance().getUtenteLoggato().getRuolo())) {
             ClientTK.loadScene("dashboard_gestore.fxml", "TheKnife - Dashboard");
         } else {
             ClientTK.loadScene("welcome.fxml", "TheKnife - Welcome");
         }
+    }
+
+    private void wrapInScrollPane(javafx.scene.Node node) {
+        javafx.application.Platform.runLater(() -> {
+            if (!(node instanceof javafx.scene.control.ScrollPane) && node != null && node.getParent() instanceof javafx.scene.layout.Pane parent) {
+                int index = parent.getChildren().indexOf(node);
+                if (index < 0) return;
+
+                parent.getChildren().remove(node);
+                javafx.scene.control.ScrollPane sp = new javafx.scene.control.ScrollPane();
+                sp.setFitToWidth(true);
+                sp.setStyle("-fx-background: transparent; -fx-background-color: transparent; -fx-padding: 0;");
+                sp.setHbarPolicy(javafx.scene.control.ScrollPane.ScrollBarPolicy.NEVER);
+
+                if (parent instanceof javafx.scene.layout.VBox) {
+                    javafx.scene.layout.Priority vgrow = javafx.scene.layout.VBox.getVgrow(node);
+                    javafx.scene.layout.VBox.setVgrow(sp, vgrow != null ? vgrow : javafx.scene.layout.Priority.ALWAYS);
+                } else if (parent instanceof javafx.scene.layout.AnchorPane) {
+                    Double top = javafx.scene.layout.AnchorPane.getTopAnchor(node);
+                    if (top != null) javafx.scene.layout.AnchorPane.setTopAnchor(sp, top);
+                    Double bottom = javafx.scene.layout.AnchorPane.getBottomAnchor(node);
+                    if (bottom != null) javafx.scene.layout.AnchorPane.setBottomAnchor(sp, bottom);
+                    Double left = javafx.scene.layout.AnchorPane.getLeftAnchor(node);
+                    if (left != null) javafx.scene.layout.AnchorPane.setLeftAnchor(sp, left);
+                    Double right = javafx.scene.layout.AnchorPane.getRightAnchor(node);
+                    if (right != null) javafx.scene.layout.AnchorPane.setRightAnchor(sp, right);
+                }
+
+                sp.setContent(node);
+                parent.getChildren().add(index, sp);
+            }
+        });
     }
 }

@@ -5,7 +5,6 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.MenuButton?>
 <?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.control.Slider?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
@@ -15,7 +14,7 @@
 
 <BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="800.0" styleClass="tk-root" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="theknife.client.controller.DettaglioRistoranteController">
    <top>
-      <VBox BorderPane.alignment="CENTER" spacing="42.0">
+      <VBox BorderPane.alignment="CENTER" spacing="12.0">
          <children>
             <HBox alignment="CENTER_LEFT" spacing="12.0">
                <children>
@@ -30,12 +29,16 @@
                   </VBox>
                   <HBox alignment="CENTER_LEFT" spacing="8.0">
                      <children>
-                        <Button mnemonicParsing="false" onAction="#handleHome" text="Home" styleClass="tk-nav-item" />
-                        <Button mnemonicParsing="false" onAction="#handlePreferiti" text="Favorites" styleClass="tk-nav-item" />
-                        <Button mnemonicParsing="false" onAction="#handleMieRecensioni" text="Reviews" styleClass="tk-nav-item" />
+                        <Button fx:id="btnNavHome" mnemonicParsing="false" onAction="#handleHome" text="Home" styleClass="tk-nav-item" />
+                        <Button fx:id="btnNavSecondary" mnemonicParsing="false" onAction="#handlePreferiti" text="Favorites" styleClass="tk-nav-item" />
+                        <Button fx:id="btnNavThird" mnemonicParsing="false" onAction="#handleMieRecensioni" text="Reviews" styleClass="tk-nav-item" />
+                        <Button fx:id="btnNavFourth" mnemonicParsing="false" onAction="#handlePrenotazioni" text="Bookings" styleClass="tk-nav-item" />
                      </children>
                   </HBox>
-                  <HBox spacing="22.0" style="-fx-padding: 0 0 0 1080">
+
+            <Region HBox.hgrow="ALWAYS" />
+
+                  <HBox>
                      <children>
                         <MenuButton fx:id="accountMenuButton" mnemonicParsing="false" styleClass="tk-account-menu" />
                      </children>
@@ -53,6 +56,12 @@
                            </children>
                         </VBox>
                         <Region HBox.hgrow="ALWAYS" />
+                        <HBox alignment="CENTER_RIGHT" spacing="5.0" fx:id="hboxTopRating" visible="true" managed="true">
+                          <children>
+                            <Label fx:id="lblAvgRatingTop" styleClass="tk-card-title-white" text="" />
+                            <Label fx:id="lblAvgStarsTop" styleClass="tk-stars-white" text="" />
+                          </children>
+                        </HBox>
                      </children>
                   </HBox>
                   <Label fx:id="lblIndirizzo" styleClass="tk-text-secondary" text="Address" />
@@ -83,18 +92,18 @@
                <children>
                   <VBox spacing="12.0" styleClass="tk-detail-left" fillWidth="false">
                      <children>
-                        <Label styleClass="tk-section-title" text="INFORMAZIONI" />
+                        <Label styleClass="tk-section-title" text="INFORMATION" />
                           <HBox spacing="8.0" fillHeight="true" prefWidth="448.0">
                            <children>
                                 <VBox prefWidth="220.0" spacing="8.0" styleClass="tk-metric-card">
                                  <children>
-                                    <Label styleClass="tk-text-secondary" text="Indirizzo" />
+                                    <Label styleClass="tk-text-secondary" text="Address" />
                                     <Label fx:id="lblIndirizzoInfo" maxWidth="220.0" styleClass="tk-card-title" wrapText="true" />
                                  </children>
                                 </VBox>
                                 <VBox prefWidth="220.0" spacing="8.0" styleClass="tk-metric-card">
                                   <children>
-                                    <Label styleClass="tk-text-secondary" text="Tipo cucina" />
+                                    <Label styleClass="tk-text-secondary" text="Cuisine" />
                                     <Label fx:id="lblCucinaInfo2" maxWidth="220.0" styleClass="tk-card-title" wrapText="true" />
                                   </children>
                                 </VBox>
@@ -105,13 +114,13 @@
                            <children>
                               <VBox prefWidth="220.0" spacing="8.0" styleClass="tk-metric-card">
                                   <children>
-                                    <Label styleClass="tk-text-secondary" text="Città" />
+                                    <Label styleClass="tk-text-secondary" text="City" />
                                     <Label fx:id="lblCittaInfo" maxWidth="220.0" styleClass="tk-card-title" wrapText="true" />
                                  </children>
                               </VBox>
                               <VBox prefWidth="220.0" spacing="8.0" styleClass="tk-metric-card">
                                  <children>
-                                    <Label styleClass="tk-text-secondary" text="Prezzo medio" />
+                                    <Label styleClass="tk-text-secondary" text="Average price" />
                                     <Label fx:id="lblPrezzoInfo2" maxWidth="220.0" styleClass="tk-card-title" wrapText="true" />
                                  </children>
                               </VBox>
@@ -138,16 +147,20 @@
                      <children>
                         <HBox alignment="CENTER_LEFT" spacing="8.0">
                            <children>
-                              <Label styleClass="tk-section-title" text="RECENSIONI" />
+                              <Label styleClass="tk-section-title" text="REVIEWS" />
                               <Region HBox.hgrow="ALWAYS" />
                            </children>
                         </HBox>
 
                         <VBox spacing="12.0" styleClass="tk-card">
                            <children>
-                              <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" prefHeight="320.0" minHeight="320.0" maxHeight="320.0">
+                              <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" prefHeight="320.0" minHeight="320.0" maxHeight="320.0" >
                                  <content>
-                                    <VBox spacing="12.0" fx:id="vboxRecensioni" />
+                                    <VBox spacing="12.0" fx:id="vboxRecensioni">
+                                       <padding>
+                                          <Insets right="10.0" />
+                                       </padding>
+                                    </VBox>
                                  </content>
                               </ScrollPane>
                            </children>
@@ -155,21 +168,28 @@
 
                         <Label fx:id="lblLoginPrompt" styleClass="tk-text-secondary" />
 
-                        <VBox spacing="12.0" styleClass="tk-card" fx:id="vboxFormRecensione">
-                           <children>
-                              <Label styleClass="tk-section-title" text="Scrivi una recensione" />
-                              <HBox alignment="CENTER_LEFT" spacing="8.0">
+                        <VBox fx:id="vboxFormRecensione" spacing="12.0" styleClass="tk-card tk-review-module">
                                  <children>
-                                    <Label styleClass="tk-text-secondary" text="Valutazione" />
-                                    <Slider fx:id="sliderStelle" blockIncrement="1.0" majorTickUnit="1.0" max="5.0" min="1.0" prefWidth="200.0" showTickMarks="true" snapToTicks="true" value="5.0" />
-                                    <Label fx:id="lblVotoSelezionato" styleClass="tk-badge" text="5" />
-                                 </children>
-                              </HBox>
-                              <TextArea fx:id="txtTestoRecensione" prefRowCount="4" promptText="Descrivi la tua esperienza..." styleClass="tk-input" wrapText="true" />
+                                    <Label styleClass="tk-section-title" text="Write a review" />
+                                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                       <children>
+                                          <HBox fx:id="starsContainer" spacing="6.0" alignment="CENTER_LEFT">
+                                            <children>
+                                              <Button fx:id="star1" text="☆" styleClass="tk-star-button" />
+                                              <Button fx:id="star2" text="☆" styleClass="tk-star-button" />
+                                              <Button fx:id="star3" text="☆" styleClass="tk-star-button" />
+                                              <Button fx:id="star4" text="☆" styleClass="tk-star-button" />
+                                              <Button fx:id="star5" text="☆" styleClass="tk-star-button" />
+                                              </children>
+                                          </HBox>
+                                        </children>
+                                    </HBox>
+                                  <TextArea fx:id="txtTestoRecensione" prefRowCount="4" promptText="Describe your experience..." styleClass="tk-input" wrapText="true" />
+
                               <HBox alignment="CENTER_RIGHT" spacing="8.0">
                                  <children>
-                                    <Button mnemonicParsing="false" onAction="#handleAnnullaRecensione" text="Annulla" styleClass="tk-btn-secondary" />
-                                    <Button fx:id="btnInviaRecensione" mnemonicParsing="false" onAction="#handleInviaRecensione" text="Invia recensione" styleClass="tk-btn-primary" />
+                                    <Button mnemonicParsing="false" onAction="#handleAnnullaRecensione" text="Cancel" styleClass="tk-btn-secondary" />
+                                    <Button fx:id="btnInviaRecensione" mnemonicParsing="false" onAction="#handleInviaRecensione" text="Submit review" styleClass="tk-btn-primary" />
                                  </children>
                               </HBox>
                            </children>
@@ -181,15 +201,15 @@
 
                   <VBox spacing="12.0" prefWidth="360.0" styleClass="tk-detail-sidebar">
                      <children>
-                        <Button fx:id="btnPrenota" mnemonicParsing="false" onAction="#handlePrenota" text="Prenota un tavolo" prefWidth="450.0" styleClass="tk-btn-primary" />
-                        <Button fx:id="btnPreferito" mnemonicParsing="false" onAction="#handlePreferito" text="Aggiungi ai preferiti" prefWidth="400.0" styleClass="tk-btn-secondary" />
+                        <Button fx:id="btnPrenota" mnemonicParsing="false" onAction="#handlePrenota" text="Book a table" prefWidth="450.0" styleClass="tk-btn-primary" />
+                        <Button fx:id="btnPreferito" mnemonicParsing="false" onAction="#handlePreferito" text="Add to favorites" prefWidth="400.0" styleClass="tk-btn-secondary" />
 
-                        <VBox spacing="8.0" styleClass="tk-card">
+                        <VBox spacing="16.0" styleClass="tk-card">
                            <children>
-                              <Label styleClass="tk-section-title" text="Valutazione media" />
+                              <Label styleClass="tk-section-title" text="Average rating" />
                               <HBox alignment="CENTER_LEFT" spacing="8.0">
                                  <children>
-                                    <Label fx:id="lblAvgRating" styleClass="tk-card-title" text="4.7 / 5.0" />
+                                    <Label fx:id="lblAvgRating" styleClass="tk-card-title" />
                                     <Region HBox.hgrow="ALWAYS" />
                                     <Label fx:id="lblReviewCount" styleClass="tk-text-secondary" text="124" />
                                  </children>
@@ -197,10 +217,11 @@
                            </children>
                         </VBox>
 
-                        <VBox spacing="8.0" styleClass="tk-card">
+                        <VBox spacing="16.0" styleClass="tk-card">
                            <children>
-                              <Label styleClass="tk-section-title" text="Delivery" />
-                              <Label fx:id="lblDeliveryInfo" styleClass="tk-text-secondary" text="Disponibile" />
+                              <Label styleClass="tk-section-title" text="Services" />
+                              <Label fx:id="lblDeliveryInfo" styleClass="tk-text-secondary" text="Delivery available" />
+                              <Label fx:id="lblPrenotazioneInfo" styleClass="tk-text-secondary" text="Booking available" />
                            </children>
                         </VBox>
                      </children>
@@ -210,12 +231,4 @@
          </content>
       </ScrollPane>
    </center>
-
-   <bottom>
-      <HBox BorderPane.alignment="CENTER_RIGHT" alignment="CENTER_RIGHT" styleClass="tk-navbar">
-         <children>
-            <Button mnemonicParsing="false" onAction="#handleIndietro" text="Back" styleClass="tk-btn-secondary" />
-         </children>
-      </HBox>
-   </bottom>
 </BorderPane>

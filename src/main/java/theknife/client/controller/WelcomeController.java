@@ -4,9 +4,10 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import theknife.client.ClientTK;
+import theknife.client.SessioneCorrente;
 
 /*
- * 
+ *
  * Mirashaj Erik 760453 VA
  * GorchynskYi Igor 757184 VA
  * Kabuka Dan Mumanga 757708 VA
@@ -24,7 +25,7 @@ public class WelcomeController {
 
     @FXML
     private Button btnGuest;
-    
+
     @FXML
     private TextField txtCittaGuest;
 
@@ -34,7 +35,7 @@ public class WelcomeController {
         if (btnLogin != null) btnLogin.setStyle(buttonStyle);
         if (btnRegistrazione != null) btnRegistrazione.setStyle(buttonStyle);
         if (btnGuest != null) btnGuest.setStyle(buttonStyle);
-        
+
         if (txtCittaGuest != null) {
             txtCittaGuest.setStyle("-fx-font-size: 14px; -fx-pref-height: 40px;");
         }
@@ -54,6 +55,7 @@ public class WelcomeController {
     private void handleGuest() {
         String citta = (txtCittaGuest != null) ? txtCittaGuest.getText().trim() : "";
         if (!citta.isEmpty()) {
+            SessioneCorrente.getInstance().setCittaGuest(citta);
             System.out.println("Guest accessing from city: " + citta);
         }
         ClientTK.loadScene("home.fxml", "TheKnife - Home");

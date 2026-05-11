@@ -11,7 +11,6 @@
     <packaging>jar</packaging>
 
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>26</maven.compiler.source>
         <maven.compiler.target>26</maven.compiler.target>
         <javafx.version>21</javafx.version>
@@ -60,38 +59,7 @@
     </dependencies>
 
     <build>
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>false</filtering>
-            </resource>
-        </resources>
         <plugins>
-            <!-- Run cleanup script to remove BOMs from FXML files on Windows -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>3.1.0</version>
-                <executions>
-                    <execution>
-                        <id>strip-fxml-bom</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <target>
-                                <exec executable="powershell" failonerror="false">
-                                    <arg value="-ExecutionPolicy"/>
-                                    <arg value="Bypass"/>
-                                    <arg value="-File"/>
-                                    <arg value="${basedir}\\cleanup-fxml-bom.ps1"/>
-                                </exec>
-                            </target>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
             <!-- Plugin JavaFX -->
             <plugin>
                 <groupId>org.openjfx</groupId>

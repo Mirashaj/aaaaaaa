@@ -1,15 +1,8 @@
 #!/usr/bin/env python3
 """
-generate_reviews.py
+    python sql/generate_reviews.py [--offset 0] [--min 3] [--max 5] [--out sql/insert_reviews.sql]
 
-Generates SQL to insert coherent, varied fake reviews for every restaurant
-listed in `sql/insert_data.sql`.
-
-Usage:
-  python sql/generate_reviews.py [--offset 17600] [--per 5] [--out sql/insert_reviews.sql]
-
-The script writes an INSERT file with `ON CONFLICT (id_ristorante,id_utente) DO NOTHING` so
-it's safe to re-run on the same database.
+  Generates 3-5 reviews per restaurant with semantically coherent star ratings.
 """
 
 import argparse
@@ -25,52 +18,81 @@ def count_restaurants(insert_data_path: Path) -> int:
     return len(re.findall(r"INSERT\s+INTO\s+RistorantiTheKnife\b", txt, flags=re.IGNORECASE))
 
 
-POSITIVE = [
-    'Exceptional creative cuisine! Highly recommend.',
-    'Delicious food and attentive service.',
-    'Beautiful presentation and outstanding flavors.',
-    'Worth every penny, will return for special occasions.',
-    'Amazing ambiance and perfect wine pairing.'
+REVIEWS_5_STARS = [
+    'Exquisite food! I\'ll definitely come back.',
+    'Exceptional in every way. Highly recommended.',
+    'Beautiful presentation and extraordinary flavors.',
+    'Memorable experience, will return for special occasions.',
+    'Charming atmosphere and impeccable service.',
+    'A delight for the palate, everything was perfect!'
 ]
 
-NEUTRAL = [
-    'Good experience, nothing extraordinary.',
-    'Solid dishes but some courses lacked punch.',
-    'Overall pleasant, service was adequate.',
-    'Pricey but acceptable for the quality.'
+REVIEWS_4_STARS = [
+    'Excellent food, good service overall.',
+    'Interesting dishes, some minor imprecisions.',
+    'Pleasant experience overall.',
+    'Good value for money, recommended.',
+    'Good cuisine, pleasant ambiance.'
 ]
 
-NEGATIVE = [
-    'Poor service and some cold dishes, disappointing.',
-    'Not what I expected, food was bland.',
-    'Long waiting time and subpar execution.',
-    'Would not recommend based on this visit.'
+REVIEWS_3_STARS = [
+    'Acceptable but nothing extraordinary.',
+    'Solid dishes, nothing special.',
+    'Normal experience, adequate service.',
+    'Expensive but acceptable for the quality.',
+    'Overall pleasant, might return.'
+]
+
+REVIEWS_2_STARS = [
+    'Slow service, mediocre food.',
+    'Not what I expected.',
+    'Bland dishes, disappointing experience.',
+    'High prices for the quality offered.',
+    'Long wait time, poor execution.'
+]
+
+REVIEWS_1_STAR = [
+    'Poor service and cold dishes, total disappointment.',
+    'I don\'t recommend it at all, horrible experience.',
+    'Terrible, will never return.',
+    'Worst restaurant I\'ve ever visited.',
+    'Low quality, rude staff.'
 ]
 
 
 def choose_text_for_rating(rating: int, rnd: random.Random) -> str:
-    if rating >= 5:
-        return rnd.choice(POSITIVE)
-    if rating == 4:
-        # mostly positive but can be lightly critical
-        return rnd.choice(POSITIVE + NEUTRAL)
-    if rating == 3:
-        return rnd.choice(NEUTRAL)
-    return rnd.choice(NEGATIVE)
+    """Select review text semantically aligned with star rating."""
+    if rating == 5:
+        return rnd.choice(REVIEWS_5_STARS)
+    elif rating == 4:
+        return rnd.choice(REVIEWS_4_STARS)
+    elif rating == 3:
+        return rnd.choice(REVIEWS_3_STARS)
+    elif rating == 2:
+        return rnd.choice(REVIEWS_2_STARS)
+    else:  # rating == 1
+        return rnd.choice(REVIEWS_1_STAR)
 
 
 def make_timestamp(rnd: random.Random) -> str:
+    """Generate a random timestamp in the past 180 days."""
     days = rnd.randint(1, 180)
     dt = datetime.datetime.now() - datetime.timedelta(days=days)
     return dt.strftime("%Y-%m-%d %H:%M:%S")
 
 
 def main():
-    p = argparse.ArgumentParser()
-    p.add_argument('--offset', type=int, default=17600,
-                   help='ID offset added to restaurant base IDs')
-    p.add_argument('--per', type=int, default=5, help='Reviews per restaurant')
-    p.add_argument('--out', type=Path, default=Path('sql/insert_reviews.sql'))
+    p = argparse.ArgumentParser(
+        description='Generate restaurant reviews with semantically coherent ratings.'
+    )
+    p.add_argument('--offset', type=int, default=0,
+                   help='ID offset added to restaurant base IDs (default: 0 for a fresh DB)')
+    p.add_argument('--min', type=int, default=3,
+                   help='Minimum reviews per restaurant (default: 3)')
+    p.add_argument('--max', type=int, default=5,
+                   help='Maximum reviews per restaurant (default: 5)')
+    p.add_argument('--out', type=Path, default=Path('sql/insert_reviews.sql'),
+                   help='Output SQL file (default: sql/insert_reviews.sql)')
     p.add_argument('--data', type=Path, default=Path('sql/insert_data.sql'),
                    help='Path to insert_data.sql to count restaurants')
     args = p.parse_args()
@@ -81,45 +103,65 @@ def main():
     n_rest = count_restaurants(args.data)
     rnd = random.Random(42)  # deterministic
 
-    users = [1, 2, 3]
-    ratings_pattern = [5, 4, 3, 4, 5]
+    # 5 users: the mock users we created (IDs 1-5)
+    users = [1, 2, 3, 4, 5]
 
     out_lines = []
     out_lines.append('-- Generated by generate_reviews.py')
-    out_lines.append(f'-- Restaurants found: {n_rest}  |  offset: {args.offset}  |  reviews per restaurant: {args.per}')
+    out_lines.append(f'-- Restaurants found: {n_rest}')
+    out_lines.append(f'-- Reviews per restaurant: {args.min}-{args.max} (random)')
+    out_lines.append(f'-- Offset: {args.offset}')
     out_lines.append('')
 
-    # Create grouped multi-row inserts per 100 restaurants to avoid huge single statement
+    # Create grouped multi-row inserts, flushing every N rows
     batch = []
+    total_reviews = 0
+
     for base_id in range(1, n_rest + 1):
         restaurant_id = base_id + args.offset
-        # make a small rnd per restaurant for variety
+        # Deterministic RNG per restaurant for reproducibility
         r_rnd = random.Random(100000 + base_id)
 
-        for i in range(args.per):
-            rating = ratings_pattern[i % len(ratings_pattern)]
+        # Random number of reviews: 3-5 per restaurant
+        num_reviews = r_rnd.randint(args.min, args.max)
+
+        # Select random ratings for this restaurant (ensures variety)
+        ratings = [r_rnd.randint(1, 5) for _ in range(num_reviews)]
+
+        # 3-5 reviews per restaurant, so 5 distinct users are enough to avoid UNIQUE conflicts.
+        review_users = r_rnd.sample(users, num_reviews)
+
+        for rating, uid in zip(ratings, review_users):
             text = choose_text_for_rating(rating, r_rnd)
-            # ensure text does not contain single quote issues
             text_sql = text.replace("'", "''")
-            uid = users[i % len(users)]
             ts = make_timestamp(r_rnd)
             batch.append(f"({restaurant_id}, {uid}, {rating}, '{text_sql}', '{ts}')")
+            total_reviews += 1
 
-        # flush batch every 500 rows to keep statements manageable
+        # Flush batch every 500 rows to keep statements manageable
         if len(batch) >= 500:
             out_lines.append('INSERT INTO Recensioni (id_ristorante, id_utente, stelle, testo, data_inserimento) VALUES')
-            out_lines.append(',\n'.join(batch) + '\nON CONFLICT (id_ristorante, id_utente) DO NOTHING;')
+            out_lines.append(',\n'.join(batch))
+            out_lines.append('ON CONFLICT (id_ristorante, id_utente) DO NOTHING;')
             out_lines.append('')
             batch = []
 
+    # Flush remaining batch
     if batch:
         out_lines.append('INSERT INTO Recensioni (id_ristorante, id_utente, stelle, testo, data_inserimento) VALUES')
-        out_lines.append(',\n'.join(batch) + '\nON CONFLICT (id_ristorante, id_utente) DO NOTHING;')
+        out_lines.append(',\n'.join(batch))
+        out_lines.append('ON CONFLICT (id_ristorante, id_utente) DO NOTHING;')
         out_lines.append('')
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text('\n'.join(out_lines), encoding='utf-8')
-    print(f'Wrote {args.out} ({n_rest * args.per} reviews)')
+
+    print(f'✓ Generated {args.out}')
+    print(f'  - Restaurants: {n_rest}')
+    print(f'  - Total reviews: {total_reviews} (~{total_reviews // n_rest} avg per restaurant)')
+    print(f'  - Reviews per restaurant: {args.min}-{args.max} (random, deterministic seed)')
+    print(f'  - Users: 5 test accounts')
+    print(f'  - Star ratings: 1-5 with semantically aligned review text')
 
 
 if __name__ == '__main__':

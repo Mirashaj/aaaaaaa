@@ -19,7 +19,7 @@ import theknife.server.dao.RistoranteDAO;
  * GorchynskYi Igor 757184 VA
  * Kabuka Dan Mumanga 757708 VA
  * Mujeci Lorenzo 757597 VA
- * 
+ *
  */
 
 public class RistoranteDAOImpl implements RistoranteDAO {
@@ -92,8 +92,6 @@ public class RistoranteDAOImpl implements RistoranteDAO {
 
         if (filtri.containsKey("limite")) {
             query.append("LIMIT ? ");
-        } else {
-            query.append("LIMIT 50 "); // Limite di sicurezza
         }
 
         if (filtri.containsKey("offset")) {
@@ -141,7 +139,7 @@ public class RistoranteDAOImpl implements RistoranteDAO {
             if (filtri.containsKey("stelleMin") && filtri.get("stelleMin") != null) {
                 stmt.setDouble(paramIndex++, ((Number) filtri.get("stelleMin")).doubleValue());
             }
-            
+
             if (filtri.containsKey("limite") && filtri.get("limite") != null) {
                 stmt.setInt(paramIndex++, ((Number) filtri.get("limite")).intValue());
             }
@@ -291,7 +289,7 @@ public class RistoranteDAOImpl implements RistoranteDAO {
             } else {
                 stmt.setNull(12, java.sql.Types.INTEGER);
             }
-            
+
 
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
@@ -300,6 +298,44 @@ public class RistoranteDAOImpl implements RistoranteDAO {
             }
         } catch (SQLException e) {
             throw new RuntimeException("Errore in fase di inserimento ristorante: " + e.getMessage(), e);
+        }
+        return null;
+    }
+
+    @Override
+    public Ristorante modifica(Ristorante r) {
+        String query = "UPDATE RistorantiTheKnife SET " +
+            "nome = ?, nazione = ?, citta = ?, indirizzo = ?, latitudine = ?, longitudine = ?, " +
+            "prezzo_medio = ?, delivery = ?, prenotazione = ?, tipo_cucina = ?, descrizione = ?, id_gestore = ? " +
+            "WHERE id = ? RETURNING id";
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setString(1, r.getNome());
+            stmt.setString(2, r.getNazione());
+            stmt.setString(3, r.getCitta());
+            stmt.setString(4, r.getIndirizzo());
+            stmt.setDouble(5, r.getLatitudine());
+            stmt.setDouble(6, r.getLongitudine());
+            stmt.setDouble(7, r.getPrezzoMedio());
+            stmt.setBoolean(8, r.isDelivery());
+            stmt.setBoolean(9, r.isPrenotazione());
+            stmt.setString(10, r.getTipoCucina());
+            stmt.setString(11, r.getDescrizione());
+            if (r.getIdGestore() > 0) {
+                stmt.setInt(12, r.getIdGestore());
+            } else {
+                stmt.setNull(12, java.sql.Types.INTEGER);
+            }
+            stmt.setInt(13, r.getId());
+
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return r;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Errore in fase di modifica ristorante: " + e.getMessage(), e);
         }
         return null;
     }
@@ -417,26 +453,26 @@ public class RistoranteDAOImpl implements RistoranteDAO {
         r.setIndirizzo(rs.getString("indirizzo"));
         r.setLatitudine(rs.getDouble("latitudine"));
         r.setLongitudine(rs.getDouble("longitudine"));
-        
+
         r.setDelivery(rs.getBoolean("delivery"));
         r.setPrenotazione(rs.getBoolean("prenotazione"));
         r.setPrezzoMedio(rs.getDouble("prezzo_medio"));
         r.setTipoCucina(rs.getString("tipo_cucina"));
         r.setDescrizione(rs.getString("descrizione"));
         r.setIdGestore(rs.getInt("id_gestore"));
-        
+
         try {
             r.setMediaStelle(rs.getDouble("media_stelle"));
         } catch (SQLException e) {
             r.setMediaStelle(0);
         }
-        
+
         try {
             r.setNumRecensioni(rs.getInt("num_recensioni"));
         } catch (SQLException e) {
             r.setNumRecensioni(0);
         }
-        
+
         return r;
     }
 

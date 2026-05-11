@@ -6,7 +6,7 @@ import java.util.Map;
 import theknife.model.Ristorante;
 
 /*
- * 
+ *
  * Mirashaj Erik 760453 VA
  * GorchynskYi Igor 757184 VA
  * Kabuka Dan Mumanga 757708 VA
@@ -21,6 +21,7 @@ public interface RistoranteDAO {
     List<theknife.model.RiepilogoRistorante> riepilogoByGestore(int idGestore);
     List<Ristorante> findVicini(double lat, double lon, double raggioKm);
     Ristorante inserisci(Ristorante r);
+    Ristorante modifica(Ristorante r);
     void aggiungiPreferito(int idUtente, int idRistorante);
     void rimuoviPreferito(int idUtente, int idRistorante);
     List<Ristorante> findPreferiti(int idUtente);

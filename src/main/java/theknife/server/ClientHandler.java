@@ -10,11 +10,13 @@ import java.util.Map;
 
 import org.mindrot.jbcrypt.BCrypt;
 
+import theknife.model.Prenotazione;
 import theknife.model.Recensione;
 import theknife.model.RiepilogoRistorante;
 import theknife.model.RispostaRecensione;
 import theknife.model.Ristorante;
 import theknife.model.Utente;
+import theknife.server.dao.impl.PrenotazioneDAOImpl;
 import theknife.server.dao.impl.RecensioneDAOImpl;
 import theknife.server.dao.impl.RistoranteDAOImpl;
 import theknife.server.dao.impl.UtenteDAOImpl;
@@ -22,7 +24,7 @@ import theknife.shared.Request;
 import theknife.shared.Response;
 
 /*
- * 
+ *
  * Mirashaj Erik 760453 VA
  * GorchynskYi Igor 757184 VA
  * Kabuka Dan Mumanga 757708 VA
@@ -39,6 +41,7 @@ public class ClientHandler implements Runnable {
     private RistoranteDAOImpl ristoranteDAO = new RistoranteDAOImpl();
     private UtenteDAOImpl utenteDAO = new UtenteDAOImpl();
     private RecensioneDAOImpl recensioneDAO = new RecensioneDAOImpl();
+    private PrenotazioneDAOImpl prenotazioneDAO = new PrenotazioneDAOImpl();
 
     /**
      * Costruttore per inizializzare la gestione del client.
@@ -101,6 +104,8 @@ public class ClientHandler implements Runnable {
         String tipo = request.getTipo();
         Map<String, Object> params = request.getParametri();
 
+        System.out.println("[DEBUG] Received request type: " + tipo);
+
         try {
             switch (tipo) {
                 case "LOGIN":
@@ -139,23 +144,48 @@ public class ClientHandler implements Runnable {
                 case "AGGIUNGI_RISTORANTE":
                     return handleAggiungiRistorante(params);
 
+                case "MODIFICA_RISTORANTE":
+                    return handleModificaRistorante(params);
+
                 case "RIEPILOGO_GESTORE":
                     return handleRiepilogoGestore(params);
+
+                case "RISTORANTI_GESTORE":
+                    return handleRistorantiGestore(params);
+
+                case "RECENSIONI_GESTORE":
+                    return handleRecensioniGestore(params);
 
                 case "RISPONDI_RECENSIONE":
                     return handleRispondiRecensione(params);
 
+                case "ELIMINA_RISPOSTA":
+                    return handleEliminaRisposta(params);
+
                 case "RISTORANTI_VICINI":
                     return handleRistorantiVicini(params);
-                    
+
                 case "VERIFICA_PREFERITO":
                     return handleVerificaPreferito(params);
-                    
+
                 case "MIE_RECENSIONI":
                     return handleMieRecensioni(params);
 
+                case "AGGIUNGI_PRENOTAZIONE":
+                    return handleAggiungiPrenotazione(params);
+
+                case "VISUALIZZA_PRENOTAZIONI":
+                    return handleVisualizzaPrenotazioni(params);
+
+                case "ELIMINA_PRENOTAZIONE":
+                    return handleEliminaPrenotazione(params);
+
+                case "MODIFICA_PRENOTAZIONE":
+                    return handleModificaPrenotazione(params);
+
                 case "DISCONNECT":
                     return new Response(true, "Disconnessione confermata.", null);
+
 
                 default:
                     return new Response(false, "Request sconosciuta: " + tipo, null);
@@ -254,11 +284,11 @@ public class ClientHandler implements Runnable {
         try {
             Integer idUtente = (Integer) params.get("idUtente");
             Integer idRistorante = (Integer) params.get("idRistorante");
-            
+
             if (idUtente == null || idRistorante == null) {
                 return new Response(false, "Parametri obbligatori mancanti.", null);
             }
-            
+
             ristoranteDAO.aggiungiPreferito(idUtente, idRistorante);
             return new Response(true, "Preferito aggiunto.", true);
         } catch (Exception e) {
@@ -270,11 +300,11 @@ public class ClientHandler implements Runnable {
         try {
             Integer idUtente = (Integer) params.get("idUtente");
             Integer idRistorante = (Integer) params.get("idRistorante");
-            
+
             if (idUtente == null || idRistorante == null) {
                 return new Response(false, "Parametri obbligatori mancanti.", null);
             }
-            
+
             ristoranteDAO.rimuoviPreferito(idUtente, idRistorante);
             return new Response(true, "Preferito rimosso.", true);
         } catch (Exception e) {
@@ -285,11 +315,11 @@ public class ClientHandler implements Runnable {
     private Response handleVisualizzaPreferiti(Map<String, Object> params) {
         try {
             Integer idUtente = (Integer) params.get("idUtente");
-            
+
             if (idUtente == null) {
                 return new Response(false, "ID utente mancante.", null);
             }
-            
+
             List<Ristorante> lista = ristoranteDAO.findPreferiti(idUtente);
             return new Response(true, "Preferiti recuperati.", lista);
         } catch (Exception e) {
@@ -394,15 +424,92 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    private Response handleModificaRistorante(Map<String, Object> params) {
+        try {
+            Integer idRistorante = (Integer) params.get("idRistorante");
+            String nome = (String) params.get("nome");
+            String nazione = (String) params.get("nazione");
+            String citta = (String) params.get("citta");
+            String indirizzo = (String) params.get("indirizzo");
+            Number latitudineObj = (Number) params.get("latitudine");
+            Number longitudineObj = (Number) params.get("longitudine");
+            Number prezzoMedioObj = (Number) params.get("prezzoMedio");
+            Boolean delivery = (Boolean) params.get("delivery");
+            Boolean prenotazione = (Boolean) params.get("prenotazione");
+            String tipoCucina = (String) params.get("tipoCucina");
+            Integer idGestore = (Integer) params.get("idGestore");
+
+            if (idRistorante == null || nome == null || citta == null || nazione == null || indirizzo == null || latitudineObj == null || longitudineObj == null) {
+                return new Response(false, "Parametri obbligatori mancanti.", null);
+            }
+
+            Ristorante ristorante = ristoranteDAO.findById(idRistorante);
+            if (ristorante == null) {
+                return new Response(false, "Ristorante non trovato.", null);
+            }
+
+            if (idGestore != null && ristorante.getIdGestore() != idGestore) {
+                return new Response(false, "Non autorizzato a modificare questo ristorante.", null);
+            }
+
+            ristorante.setNome(nome);
+            ristorante.setNazione(nazione);
+            ristorante.setCitta(citta);
+            ristorante.setIndirizzo(indirizzo);
+            ristorante.setLatitudine(latitudineObj.doubleValue());
+            ristorante.setLongitudine(longitudineObj.doubleValue());
+            if (prezzoMedioObj != null) ristorante.setPrezzoMedio(prezzoMedioObj.doubleValue());
+            if (delivery != null) ristorante.setDelivery(delivery);
+            if (prenotazione != null) ristorante.setPrenotazione(prenotazione);
+            if (tipoCucina != null) ristorante.setTipoCucina(tipoCucina);
+
+            Ristorante aggiornato = ristoranteDAO.modifica(ristorante);
+            if (aggiornato != null) {
+                return new Response(true, "Ristorante modificato.", aggiornato);
+            }
+            return new Response(false, "Impossibile modificare il ristorante.", null);
+        } catch (Exception e) {
+            return new Response(false, "Errore: " + e.getMessage(), null);
+        }
+    }
+
     private Response handleRiepilogoGestore(Map<String, Object> params) {
         try {
             Integer idGestore = (Integer) params.get("idGestore");
             if (idGestore == null) {
                 return new Response(false, "ID gestore mancante.", null);
             }
-            
+
             List<RiepilogoRistorante> lista = ristoranteDAO.riepilogoByGestore(idGestore);
             return new Response(true, "Riepilogo gestore.", lista);
+        } catch (Exception e) {
+            return new Response(false, "Errore: " + e.getMessage(), null);
+        }
+    }
+
+    private Response handleRistorantiGestore(Map<String, Object> params) {
+        try {
+            Integer idGestore = (Integer) params.get("idGestore");
+            if (idGestore == null) {
+                return new Response(false, "ID gestore mancante.", null);
+            }
+
+            List<Ristorante> lista = ristoranteDAO.findByGestore(idGestore);
+            return new Response(true, "Ristoranti gestore.", lista);
+        } catch (Exception e) {
+            return new Response(false, "Errore: " + e.getMessage(), null);
+        }
+    }
+
+    private Response handleRecensioniGestore(Map<String, Object> params) {
+        try {
+            Integer idGestore = (Integer) params.get("idGestore");
+            if (idGestore == null) {
+                return new Response(false, "ID gestore mancante.", null);
+            }
+
+            List<Recensione> lista = recensioneDAO.findByGestore(idGestore);
+            return new Response(true, "Recensioni gestore.", lista);
         } catch (Exception e) {
             return new Response(false, "Errore: " + e.getMessage(), null);
         }
@@ -425,15 +532,29 @@ public class ClientHandler implements Runnable {
         return new Response(false, "Errore nell'aggiunta della risposta.", null);
     }
 
+    private Response handleEliminaRisposta(Map<String, Object> params) {
+        Integer idRisposta = (Integer) params.get("idRisposta");
+        if (idRisposta == null) {
+            return new Response(false, "ID risposta mancante.", null);
+        }
+
+        boolean result = recensioneDAO.eliminaRisposta(idRisposta);
+        if (result) {
+            return new Response(true, "Risposta eliminata.", true);
+        }
+
+        return new Response(false, "Errore nell'eliminazione della risposta.", null);
+    }
+
     private Response handleVerificaPreferito(Map<String, Object> params) {
         try {
             Integer idUtente = (Integer) params.get("idUtente");
             Integer idRistorante = (Integer) params.get("idRistorante");
-            
+
             if (idUtente == null || idRistorante == null) {
                 return new Response(false, "Parametri obbligatori mancanti.", null);
             }
-            
+
             boolean isPreferito = ristoranteDAO.isPreferito(idUtente, idRistorante);
             return new Response(true, "Ok.", isPreferito);
         } catch (Exception e) {
@@ -447,13 +568,109 @@ public class ClientHandler implements Runnable {
             if (idUtente == null) {
                 return new Response(false, "ID utente mancante.", null);
             }
-            
+
             List<Recensione> lista = recensioneDAO.findByUtente(idUtente);
             return new Response(true, "Recensioni utente.", lista);
         } catch (Exception e) {
             return new Response(false, "Errore: " + e.getMessage(), null);
         }
     }
+
+    private Response handleAggiungiPrenotazione(Map<String, Object> params) {
+        try {
+            Integer idUtente = (Integer) params.get("idUtente");
+            Integer idRistorante = (Integer) params.get("idRistorante");
+            java.time.LocalDateTime data = (java.time.LocalDateTime) params.get("dataPrenotazione");
+            Number postiObj = (Number) params.get("posti");
+
+            if (idUtente == null || idRistorante == null) {
+                return new Response(false, "Parametri obbligatori mancanti.", null);
+            }
+
+            int posti = (postiObj != null) ? postiObj.intValue() : 1;
+
+            Prenotazione p = new Prenotazione();
+            p.setIdUtente(idUtente);
+            p.setIdRistorante(idRistorante);
+            p.setDataPrenotazione(data);
+            p.setPosti(posti);
+            p.setStato(params.get("stato") != null ? (String) params.get("stato") : "CONFERMATA");
+
+            p = prenotazioneDAO.inserisci(p);
+            if (p.getId() > 0) {
+                return new Response(true, "Prenotazione aggiunta.", p);
+            }
+
+            return new Response(false, "Errore nell'inserimento della prenotazione.", null);
+        } catch (Exception e) {
+            return new Response(false, "Errore: " + e.getMessage(), null);
+        }
+    }
+
+    private Response handleVisualizzaPrenotazioni(Map<String, Object> params) {
+        try {
+            Integer idUtente = (Integer) params.get("idUtente");
+            if (idUtente == null) {
+                return new Response(false, "ID utente mancante.", null);
+            }
+            java.util.List<Prenotazione> lista = prenotazioneDAO.findByUtente(idUtente);
+            return new Response(true, "Prenotazioni recuperate.", lista);
+        } catch (Exception e) {
+            return new Response(false, "Errore: " + e.getMessage(), null);
+        }
+    }
+
+    private Response handleEliminaPrenotazione(Map<String, Object> params) {
+        try {
+            Integer idPrenotazione = (Integer) params.get("idPrenotazione");
+            if (idPrenotazione == null) {
+                return new Response(false, "ID prenotazione mancante.", null);
+            }
+            boolean ok = prenotazioneDAO.elimina(idPrenotazione);
+            if (ok) return new Response(true, "Prenotazione eliminata.", true);
+            return new Response(false, "Errore nell'eliminazione della prenotazione.", null);
+        } catch (Exception e) {
+            return new Response(false, "Errore: " + e.getMessage(), null);
+        }
+    }
+
+    private Response handleModificaPrenotazione(Map<String, Object> params) {
+        try {
+            Integer idUtente = (Integer) params.get("idUtente");
+            Integer idPrenotazione = (Integer) params.get("idPrenotazione");
+            java.time.LocalDateTime data = (java.time.LocalDateTime) params.get("dataPrenotazione");
+            Number postiObj = (Number) params.get("posti");
+
+            if (idUtente == null || idPrenotazione == null) {
+                return new Response(false, "Parametri obbligatori mancanti.", null);
+            }
+            if (data == null) {
+                return new Response(false, "Data prenotazione mancante.", null);
+            }
+            int posti = (postiObj != null) ? postiObj.intValue() : 1;
+            if (posti < 1) {
+                return new Response(false, "Posti non validi.", null);
+            }
+
+            Prenotazione p = new Prenotazione();
+            p.setId(idPrenotazione);
+            p.setIdUtente(idUtente);
+            p.setDataPrenotazione(data);
+            p.setPosti(posti);
+            // keep current status unless client changes it; we enforce default if null
+            p.setStato(params.get("stato") != null ? (String) params.get("stato") : "CONFERMATA");
+
+            Prenotazione aggiornata = prenotazioneDAO.aggiorna(p);
+            if (aggiornata != null) {
+                return new Response(true, "Prenotazione aggiornata.", aggiornata);
+            }
+            return new Response(false, "Impossibile aggiornare la prenotazione.", null);
+        } catch (Exception e) {
+            return new Response(false, "Errore: " + e.getMessage(), null);
+        }
+    }
+
+
 
     private Response handleRistorantiVicini(Map<String, Object> params) {
         try {
@@ -463,7 +680,7 @@ public class ClientHandler implements Runnable {
             }
 
             params.put("limite", 20); // Limita a 20 risultati
-            
+
             List<Ristorante> risultati = ristoranteDAO.cerca(params);
             return new Response(true, "Ristoranti vicini.", risultati);
         } catch (Exception e) {

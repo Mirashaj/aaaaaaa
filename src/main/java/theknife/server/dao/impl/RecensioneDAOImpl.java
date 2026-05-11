@@ -19,7 +19,7 @@ import theknife.server.dao.RecensioneDAO;
  * GorchynskYi Igor 757184 VA
  * Kabuka Dan Mumanga 757708 VA
  * Mujeci Lorenzo 757597 VA
- * 
+ *
  */
 
 public class RecensioneDAOImpl implements RecensioneDAO {
@@ -28,7 +28,7 @@ public class RecensioneDAOImpl implements RecensioneDAO {
     public List<Recensione> findByRistorante(int idRistorante) {
         List<Recensione> risultati = new ArrayList<>();
         String query = "SELECT r.*, u.nome AS nome_utente, " +
-            "rr.id AS rr_id, rr.id_gestore, rr.testo AS rr_testo, rr.data_risposta " +
+            "rr.id AS rr_id, rr.id_gestore AS rr_id_gestore, rr.testo AS rr_testo, rr.data_risposta " +
             "FROM Recensioni r " +
             "LEFT JOIN Utenti u ON r.id_utente = u.id " +
             "LEFT JOIN RisposteRecensioni rr ON r.id = rr.id_recensione " +
@@ -44,6 +44,34 @@ public class RecensioneDAOImpl implements RecensioneDAO {
             while (rs.next()) {
                 Recensione rec = mapRecensione(rs);
                 risultati.add(rec);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return risultati;
+    }
+
+    @Override
+    public List<Recensione> findByGestore(int idGestore) {
+        List<Recensione> risultati = new ArrayList<>();
+        String query = "SELECT rec.*, r.nome AS nome_ristorante, u.nome AS nome_utente, " +
+            "rr.id AS rr_id, rr.id_gestore AS rr_id_gestore, rr.testo AS rr_testo, rr.data_risposta " +
+            "FROM Recensioni rec " +
+            "JOIN RistorantiTheKnife r ON r.id = rec.id_ristorante " +
+            "LEFT JOIN Utenti u ON rec.id_utente = u.id " +
+            "LEFT JOIN RisposteRecensioni rr ON rr.id_recensione = rec.id " +
+            "WHERE r.id_gestore = ? " +
+            "ORDER BY rec.data_inserimento DESC";
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setInt(1, idGestore);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                risultati.add(mapRecensione(rs));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -75,14 +103,14 @@ public class RecensioneDAOImpl implements RecensioneDAO {
                 rec.setIdUtente(rs.getInt("id_utente"));
                 rec.setStelle(rs.getInt("stelle"));
                 rec.setTesto(rs.getString("testo"));
-                
+
                 Timestamp ts = rs.getTimestamp("data_inserimento");
                 if (ts != null) {
                     rec.setDataInserimento(ts.toLocalDateTime());
                 }
-                
+
                 rec.setNomeRistorante(rs.getString("nome_ristorante"));
-                
+
                 if (rs.getString("testo_risposta") != null) {
                     RispostaRecensione risposta = new RispostaRecensione();
                     risposta.setTesto(rs.getString("testo_risposta"));
@@ -167,7 +195,11 @@ public class RecensioneDAOImpl implements RecensioneDAO {
     public RispostaRecensione rispondi(int idRecensione, int idGestore, String testo) {
         String query = "INSERT INTO RisposteRecensioni " +
             "(id_recensione, id_gestore, testo) " +
-            "VALUES (?, ?, ?) RETURNING *";
+            "VALUES (?, ?, ?) " +
+            "ON CONFLICT (id_recensione) DO UPDATE SET " +
+            "id_gestore = EXCLUDED.id_gestore, " +
+            "testo = EXCLUDED.testo, " +
+            "data_risposta = NOW() RETURNING *";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
@@ -198,6 +230,23 @@ public class RecensioneDAOImpl implements RecensioneDAO {
         return null;
     }
 
+    @Override
+    public boolean eliminaRisposta(int idRisposta) {
+        String query = "DELETE FROM RisposteRecensioni WHERE id = ?";
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setInt(1, idRisposta);
+            int rowsAffected = stmt.executeUpdate();
+
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     /**
      * Helper per mappare un ResultSet a un oggetto Recensione.
      */
@@ -216,8 +265,8 @@ public class RecensioneDAOImpl implements RecensioneDAO {
         }
 
         // Mappa la risposta se presente
-        Integer rrId = rs.getInt("rr_id");
-        if (rrId != null && rrId > 0) {
+        int rrId = rs.getInt("rr_id");
+        if (!rs.wasNull() && rrId > 0) {
             RispostaRecensione risposta = new RispostaRecensione();
             risposta.setId(rrId);
             risposta.setIdRecensione(rs.getInt("id"));

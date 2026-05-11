@@ -7,7 +7,7 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
 /*
- * 
+ *
  * Mirashaj Erik 760453 VA
  * GorchynskYi Igor 757184 VA
  * Kabuka Dan Mumanga 757708 VA
@@ -25,17 +25,17 @@ public class DatabaseConnection {
         config.setJdbcUrl("jdbc:postgresql://" + host + "/" + dbName);
         config.setUsername(user);
         config.setPassword(password);
-        
+
         // Configurazioni ottimali di base per HikariCP
         config.setMaximumPoolSize(10);
         config.setMinimumIdle(2);
         config.setConnectionTimeout(30000);
-        
+
         dataSource = new HikariDataSource(config);
     }
 
     /**
-     * Inizializza il pool di connessioni (deve essere chiamato prima di getInstance).
+     * Inizializza il pool di connessioni.
      *
      * @param host     Host del database.
      * @param dbName   Nome del database.
@@ -63,15 +63,15 @@ public class DatabaseConnection {
     /**
      * Restituisce una connessione attiva dal pool.
      *
-     * @return Una Connection valida verso PostgreSQL.
+     * @return Connection valida verso PostgreSQL.
      * @throws SQLException Se non è possibile ottenere la connessione.
      */
     public Connection getConnection() throws SQLException {
         return dataSource.getConnection();
     }
-    
+
     /**
-     * Chiude il pool di connessioni, liberando le risorse.
+     * Chiude il pool di connessioni liberando le risorse.
      */
     public void closePool() {
         if (dataSource != null && !dataSource.isClosed()) {

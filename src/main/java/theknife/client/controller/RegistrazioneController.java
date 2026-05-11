@@ -8,12 +8,13 @@ import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
 import theknife.client.ClientTK;
 import theknife.client.ServerConnection;
+import theknife.client.SessioneCorrente;
 import theknife.model.Utente;
 import theknife.shared.Request;
 import theknife.shared.Response;
 
 /*
- * 
+ *
  * Mirashaj Erik 760453 VA
  * GorchynskYi Igor 757184 VA
  * Kabuka Dan Mumanga 757708 VA
@@ -90,7 +91,8 @@ public class RegistrazioneController {
             if (response.isSuccesso()) {
                 Utente utente = (Utente) response.getPayload();
                 System.out.println("Registration complete: " + utente);
-                ClientTK.loadScene("welcome.fxml", "TheKnife - Welcome");
+                SessioneCorrente.getInstance().login(utente);
+                ClientTK.loadScene("home.fxml", "TheKnife - Home");
             } else {
                 lblErrore.setText(response.getMessaggio());
             }
