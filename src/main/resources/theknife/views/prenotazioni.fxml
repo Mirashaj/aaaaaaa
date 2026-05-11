@@ -79,7 +79,7 @@
                       </padding>
                     </HBox>
 
-                    <TilePane fx:id="tilePrenotazioni" hgap="16.0" vgap="16.0" prefColumns="3" styleClass="tk-grid" />
+                    <TilePane fx:id="tilePrenotazioni" hgap="16.0" vgap="16.0" prefColumns="4" styleClass="tk-grid" />
 
 
                     <VBox fx:id="emptyStateBox" spacing="12.0" alignment="CENTER" visible="false" managed="false">

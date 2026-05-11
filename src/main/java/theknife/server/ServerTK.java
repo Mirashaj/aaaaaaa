@@ -44,12 +44,12 @@ public class ServerTK {
      * Avvia il server in ascolto su un thread principale.
      */
     public void avvia() {
-        System.out.println("Server TheKnife avviato sulla porta: " + serverSocket.getLocalPort());
+        System.out.println("TheKnife server started on port: " + serverSocket.getLocalPort());
 
         try {
             while (true) {
                 Socket clientSocket = serverSocket.accept();
-                System.out.println("Nuova connessione da: " + clientSocket.getInetAddress());
+                System.out.println("New connection from: " + clientSocket.getInetAddress());
 
                 // Crea un nuovo thread per gestire il client
                 ClientHandler handler = new ClientHandler(clientSocket);
@@ -57,7 +57,7 @@ public class ServerTK {
                 clientThread.start();
             }
         } catch (IOException e) {
-            System.err.println("Errore durante l'accettazione della connessione: " + e.getMessage());
+            System.err.println("Error accepting connection: " + e.getMessage());
         }
     }
 
@@ -68,10 +68,10 @@ public class ServerTK {
         try {
             if (serverSocket != null && !serverSocket.isClosed()) {
                 serverSocket.close();
-                System.out.println("Server chiuso.");
+                System.out.println("Server closed.");
             }
         } catch (IOException e) {
-            System.err.println("Errore durante la chiusura del server: " + e.getMessage());
+            System.err.println("Error closing server: " + e.getMessage());
         }
 
         // Chiudi il pool di connessioni
@@ -104,7 +104,7 @@ public class ServerTK {
                 try {
                     porta = Integer.parseInt(args[i + 1]);
                 } catch (NumberFormatException e) {
-                    System.err.println("Porta non valida. Uso porta di default: " + DEFAULT_PORT);
+                    System.err.println("Invalid port. Using default port: " + DEFAULT_PORT);
                     porta = DEFAULT_PORT;
                 }
             }
@@ -112,19 +112,19 @@ public class ServerTK {
 
         // Se nessun argomento, mostra di fatto un menu interattivo
         if (args.length == 0) {
-            System.out.println("=== Configurazione Server TheKnife ===");
-            System.out.println("Utilizzo parametri di default:");
+            System.out.println("=== TheKnife Server Configuration ===");
+            System.out.println("Using default parameters:");
             System.out.println("  Host DB: " + host);
-            System.out.println("  Nome DB: " + dbName);
+            System.out.println("  DB Name: " + dbName);
             System.out.println("  User: " + user);
-            System.out.println("  Port Server: " + porta);
+            System.out.println("  Server Port: " + porta);
             System.out.println();
         }
 
         try {
             // Inizializza il connection pool
             DatabaseConnection.init(host, dbName, user, password);
-            System.out.println("Connessione al database inizializzata.");
+            System.out.println("Database connection initialized.");
 
             // Avvia il backfill in background senza bloccare il server
             Thread backfillThread = new Thread(() -> backfillRestaurantDescriptions());
@@ -136,14 +136,14 @@ public class ServerTK {
 
             // Gestisce l'arresto graceful
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                System.out.println("\nArresto server in corso...");
+                System.out.println("\nServer shutdown in progress...");
                 server.chiudi();
             }));
 
             server.avvia();
 
         } catch (Exception e) {
-            System.err.println("Errore durante l'avvio del server: " + e.getMessage());
+            System.err.println("Error during server startup: " + e.getMessage());
             e.printStackTrace();
         }
     }

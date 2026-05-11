@@ -82,42 +82,42 @@
                                     <VBox GridPane.columnIndex="0" GridPane.rowIndex="0">
                                        <children>
                                           <Label text="👤 First name" styleClass="tk-field-label" />
-                                          <TextField fx:id="tfNome" promptText=" Mario" styleClass="tk-input" />
+                                          <TextField fx:id="tfNome" promptText="John" styleClass="tk-input" />
                                        </children>
                                     </VBox>
 
                                     <VBox GridPane.columnIndex="1" GridPane.rowIndex="0">
                                        <children>
                                           <Label text="👥 Last name" styleClass="tk-field-label" />
-                                          <TextField fx:id="tfCognome" promptText=" Monti" styleClass="tk-input" />
+                                          <TextField fx:id="tfCognome" promptText="Doe" styleClass="tk-input" />
                                        </children>
                                     </VBox>
 
                                     <VBox GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="1">
                                        <children>
                                           <Label text="✉ Email" styleClass="tk-field-label" />
-                                          <TextField fx:id="tfEmail" promptText=" tua@email.com" styleClass="tk-input" />
+                                          <TextField fx:id="tfEmail" promptText="your@email.com" styleClass="tk-input" />
                                        </children>
                                     </VBox>
 
                                     <VBox GridPane.columnIndex="0" GridPane.rowIndex="2">
                                        <children>
                                           <Label text="🔒 Password" styleClass="tk-field-label" />
-                                          <PasswordField fx:id="pfPassword" promptText=" ••••••••" styleClass="tk-input" />
+                                          <PasswordField fx:id="pfPassword" promptText="••••••••" styleClass="tk-input" />
                                        </children>
                                     </VBox>
 
                                     <VBox GridPane.columnIndex="1" GridPane.rowIndex="2">
                                        <children>
                                           <Label text="🔐 Confirm" styleClass="tk-field-label" />
-                                          <PasswordField promptText=" ••••••••" styleClass="tk-input" />
+                                          <PasswordField promptText="••••••••" styleClass="tk-input" />
                                        </children>
                                     </VBox>
 
                                     <VBox GridPane.columnIndex="0" GridPane.rowIndex="3">
                                        <children>
                                           <Label text="📍 Address" styleClass="tk-field-label" />
-                                          <TextField fx:id="tfDomicilio" promptText=" Milano" styleClass="tk-input" />
+                                          <TextField fx:id="tfDomicilio" promptText="Milan" styleClass="tk-input" />
                                        </children>
                                     </VBox>
 

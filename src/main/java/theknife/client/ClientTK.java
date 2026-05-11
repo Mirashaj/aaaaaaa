@@ -13,7 +13,7 @@ import javafx.stage.Stage;
 import theknife.shared.Request;
 
 /*
- * 
+ *
  * Mirashaj Erik 760453 VA
  * GorchynskYi Igor 757184 VA
  * Kabuka Dan Mumanga 757708 VA
@@ -42,7 +42,7 @@ public class ClientTK extends Application {
         try {
             ServerConnection.init("localhost", 5000);
         } catch (IOException e) {
-            System.err.println("Errore di connessione al server: " + e.getMessage());
+            System.err.println("Connection error to server: " + e.getMessage());
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Errore di connessione");
             alert.setHeaderText("Impossibile connettersi al server. Verificare che serverTK sia in esecuzione.");
@@ -91,7 +91,7 @@ public class ClientTK extends Application {
                 primaryStage.show();
             }
         } catch (IOException e) {
-            System.err.println("Errore nel caricamento della schermata: " + e.getMessage());
+            System.err.println("Error loading screen: " + e.getMessage());
             e.printStackTrace();
         }
     }

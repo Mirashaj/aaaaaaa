@@ -11,9 +11,11 @@ public class Prenotazione implements Serializable {
     private int idUtente;
     private int idRistorante;
     private String nomeRistorante;
+    private String nomeUtente;
     private LocalDateTime dataPrenotazione;
     private int posti;
     private String stato;
+    private String noteSpeciali;
 
     public Prenotazione() {}
 
@@ -29,14 +31,22 @@ public class Prenotazione implements Serializable {
     public String getNomeRistorante() { return nomeRistorante; }
     public void setNomeRistorante(String nomeRistorante) { this.nomeRistorante = nomeRistorante; }
 
+    public String getNomeUtente() { return nomeUtente; }
+    public void setNomeUtente(String nomeUtente) { this.nomeUtente = nomeUtente; }
+
     public LocalDateTime getDataPrenotazione() { return dataPrenotazione; }
     public void setDataPrenotazione(LocalDateTime dataPrenotazione) { this.dataPrenotazione = dataPrenotazione; }
 
     public int getPosti() { return posti; }
     public void setPosti(int posti) { this.posti = posti; }
 
+    public int getNumeroPersone() { return posti; }
+
     public String getStato() { return stato; }
     public void setStato(String stato) { this.stato = stato; }
+
+    public String getNoteSpeciali() { return noteSpeciali; }
+    public void setNoteSpeciali(String noteSpeciali) { this.noteSpeciali = noteSpeciali; }
 
     @Override
     public String toString() {

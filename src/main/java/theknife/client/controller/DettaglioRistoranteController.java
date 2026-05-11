@@ -246,7 +246,7 @@ public class DettaglioRistoranteController {
                     Platform.runLater(this::updatePreferitoBtn);
                 }
             } catch (IOException | ClassNotFoundException e) {
-                System.err.println("Errore nel controllo dei preferiti: " + e.getMessage());
+                System.err.println("Error checking favorites: " + e.getMessage());
             }
         }).start();
     }
@@ -272,7 +272,7 @@ public class DettaglioRistoranteController {
                     }
                 }
             } catch (IOException | ClassNotFoundException e) {
-                System.err.println("Errore nel caricamento dettagli ristorante: " + e.getMessage());
+                System.err.println("Error loading restaurant details: " + e.getMessage());
             }
         }).start();
     }
@@ -474,7 +474,7 @@ public class DettaglioRistoranteController {
 
 
         } catch (IOException | ClassNotFoundException e) {
-            System.err.println("Errore nell'invio della recensione: " + e.getMessage());
+            System.err.println("Error sending review: " + e.getMessage());
         }
     }
 
@@ -730,7 +730,7 @@ public class DettaglioRistoranteController {
                 }
             }
         } catch (IOException | ClassNotFoundException e) {
-            System.err.println("Errore nella modifica dei preferiti: " + e.getMessage());
+            System.err.println("Error modifying favorites: " + e.getMessage());
         }
     }
 

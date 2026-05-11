@@ -31,7 +31,7 @@
                         <Button fx:id="btnNavHome" mnemonicParsing="false" onAction="#handleHome" text="Home" styleClass="tk-nav-item" />
                         <Button fx:id="btnNavRestaurants" mnemonicParsing="false" onAction="#handleRestaurants" text="Restaurants" styleClass="tk-nav-item" />
                         <Button fx:id="btnNavReviews" mnemonicParsing="false" onAction="#handleReviews" text="Review" styleClass="tk-nav-active" />
-                        <Button fx:id="btnNavBookings" mnemonicParsing="false" text="Bookings" styleClass="tk-nav-item" visible="false" managed="false" />
+                        <Button fx:id="btnNavBookings" mnemonicParsing="false" onAction="#handleBookings" text="Bookings" styleClass="tk-nav-item" visible="false" managed="false" />
                      </children>
                   </HBox>
                   <Region HBox.hgrow="ALWAYS" />
@@ -68,7 +68,7 @@
             <VBox spacing="18.0" styleClass="tk-detail-layout">
                <children>
                   <VBox fx:id="vboxRecensioni" spacing="16.0" />
-                  <Label fx:id="lblEmpty" text="Non ci sono ancora recensioni sui tuoi ristoranti" styleClass="tk-text-secondary" visible="false" managed="false" />
+                  <Label fx:id="lblEmpty" text="There are no reviews for your restaurants yet" styleClass="tk-text-secondary" visible="false" managed="false" />
                   <Label fx:id="lblError" text="" styleClass="tk-text-error" visible="false" managed="false" />
                </children>
             </VBox>

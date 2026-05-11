@@ -454,7 +454,7 @@
 }
 
 .tk-card {
-  -fx-pref-width: 340px;
+    -fx-pref-width: 380px;
     -fx-background-color: rgba(255,255,255,0.035);
     -fx-border-color: rgba(255,255,255,0.08);
     -fx-border-width: 1;
@@ -603,9 +603,9 @@
 }
 
 .tk-result-card {
-    -fx-pref-width: 340px;
-    -fx-min-width: 340px;
-    -fx-max-width: 340px;
+    -fx-pref-width: 380px;
+    -fx-min-width: 300px;
+    -fx-max-width: 420px;
 }
 
 .tk-result-thumb {
@@ -750,6 +750,9 @@
     -fx-min-height: 220;
     -fx-pref-height: 240;
     -fx-max-height: 280;
+    -fx-pref-width: 380px;
+    -fx-min-width: 300px;
+    -fx-max-width: 420px;
 }
 
 .tk-review-card:hover {

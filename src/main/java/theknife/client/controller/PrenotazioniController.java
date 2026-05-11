@@ -118,8 +118,9 @@ public class PrenotazioniController {
     private VBox createBookingCard(Prenotazione p) {
         VBox card = new VBox(10);
         card.getStyleClass().addAll("tk-review-card", "tk-review-card-detail");
-        card.setPrefWidth(240);
-        card.setPrefHeight(180);
+        // larger card size to match layout (allow up to 4 cards per row)
+        card.setPrefWidth(380);
+        card.setPrefHeight(200);
 
 
         HBox header = new HBox(10);
@@ -144,7 +145,7 @@ public class PrenotazioniController {
 
         HBox actions = new HBox(8);
         actions.setAlignment(javafx.geometry.Pos.BOTTOM_RIGHT);
-        Button btnEdit = new Button("Modifica");
+        Button btnEdit = new Button("Edit");
         btnEdit.getStyleClass().add("tk-btn-secondary");
 
         Button btnCancel = new Button("Delete");

@@ -192,8 +192,11 @@ public class DashboardGestoreController {
             btnNavReviews.getStyleClass().setAll("tk-nav-item");
         }
         if (btnNavBookings != null) {
-            btnNavBookings.setVisible(false);
-            btnNavBookings.setManaged(false);
+            btnNavBookings.setText("Bookings");
+            btnNavBookings.getStyleClass().setAll("tk-nav-item");
+            btnNavBookings.setVisible(true);
+            btnNavBookings.setManaged(true);
+            btnNavBookings.setOnAction(e -> handleBookings());
         }
     }
 
@@ -247,6 +250,7 @@ public class DashboardGestoreController {
     @FXML private void handleHome() { ClientTK.loadScene("home.fxml", "TheKnife - Home"); }
     @FXML private void handleRestaurants() { ClientTK.loadScene("dashboard_gestore.fxml", "TheKnife - Dashboard"); }
     @FXML private void handleReviews() { ClientTK.loadScene("gestione_recensioni.fxml", "TheKnife - Review Management"); }
+    @FXML private void handleBookings() { ClientTK.loadScene("prenotazioni_gestore.fxml", "TheKnife - Bookings"); }
     @FXML private void handleLogout() {
         try { ServerConnection.getInstance().send(new Request("DISCONNECT")); ServerConnection.getInstance().disconnect(); } catch (Exception e) {}
         SessioneCorrente.getInstance().logout();

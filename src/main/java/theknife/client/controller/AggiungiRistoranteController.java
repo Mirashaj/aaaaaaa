@@ -27,7 +27,7 @@ public class AggiungiRistoranteController {
             return;
         }
 
-        // if coming from edit button on owner dashboard, pre-fill form
+        // Se proviene dal pulsante di modifica nella dashboard del gestore, pre-compila il modulo
         if (isEditMode()) {
             fillFormFromSelected();
         }
@@ -107,7 +107,7 @@ public class AggiungiRistoranteController {
             Response res = ServerConnection.getInstance().send(req);
 
             if (res.isSuccesso()) {
-                // clear selection to avoid accidentally re-editing
+                // Cancella la selezione per evitare di re-editare accidentalmente
                 if (SessioneCorrente.getInstance().getSelectedRistorante() != null) {
                     SessioneCorrente.getInstance().setSelectedRistorante(null);
                 }

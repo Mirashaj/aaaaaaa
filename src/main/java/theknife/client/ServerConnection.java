@@ -9,7 +9,7 @@ import theknife.shared.Request;
 import theknife.shared.Response;
 
 /*
- * 
+ *
  * Mirashaj Erik 760453 VA
  * GorchynskYi Igor 757184 VA
  * Kabuka Dan Mumanga 757708 VA
@@ -70,7 +70,7 @@ public class ServerConnection {
         this.oos = new ObjectOutputStream(socket.getOutputStream());
         this.oos.flush();
         this.ois = new ObjectInputStream(socket.getInputStream());
-        System.out.println("Connesso al server: " + host + ":" + port);
+        System.out.println("Connected to server: " + host + ":" + port);
     }
 
     /**
@@ -107,9 +107,9 @@ public class ServerConnection {
             if (ois != null) ois.close();
             if (oos != null) oos.close();
             if (socket != null) socket.close();
-            System.out.println("Disconnesso dal server.");
+            System.out.println("Disconnected from server.");
         } catch (IOException e) {
-            System.err.println("Errore durante la disconnessione: " + e.getMessage());
+            System.err.println("Error during disconnection: " + e.getMessage());
         } finally {
             instance = null;
         }

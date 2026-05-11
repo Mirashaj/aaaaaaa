@@ -233,7 +233,7 @@ public class MieRecensioniController {
                 lblError.setManaged(false);
             });
 
-            // Send update in background; do not show error to user if it fails
+            // Invia l'aggiornamento in background; non mostrare l'errore all'utente se fallisce
             new Thread(() -> {
                 try {
                     Request req = new Request("MODIFICA_RECENSIONE");
@@ -241,9 +241,9 @@ public class MieRecensioniController {
                     req.addParametro("stelle", selected[0]);
                     req.addParametro("testo", txt.getText());
                     Response res = ServerConnection.getInstance().send(req);
-                    // don't display errors to user; optionally log or handle silently
+                    // Non mostrare errori all'utente; gestire silenziosamente
                 } catch (IOException | ClassNotFoundException ex) {
-                    // silent on network errors per user's request
+                    // Silenzioso su errori di rete per richiesta dell'utente
                 }
             }).start();
         });

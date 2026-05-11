@@ -72,7 +72,7 @@
                                           <VBox spacing="6.0">
                                              <children>
                                                 <Label text="✉ Email" styleClass="tk-field-label" />
-                                                <TextField fx:id="tfEmail" promptText="tua@email.com" styleClass="tk-input" />
+                                                <TextField fx:id="tfEmail" promptText="your@email.com" styleClass="tk-input" />
                                              </children>
                                           </VBox>
                                           <VBox spacing="6.0">

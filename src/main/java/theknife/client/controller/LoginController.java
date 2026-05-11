@@ -51,7 +51,7 @@ public class LoginController {
 
             if (response.isSuccesso()) {
                 Utente utente = (Utente) response.getPayload();
-                System.out.println("Login eseguito: " + utente);
+                System.out.println("Login completed: " + utente);
 
                 theknife.client.SessioneCorrente.getInstance().login(utente);
 

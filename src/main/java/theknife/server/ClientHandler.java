@@ -63,7 +63,7 @@ public class ClientHandler implements Runnable {
             oos.flush();
             ois = new ObjectInputStream(socket.getInputStream());
 
-            System.out.println("ClientHandler avviato per il client: " + socket.getInetAddress());
+            System.out.println("ClientHandler started for client: " + socket.getInetAddress());
 
             // Loop di ricezione e elaborazione delle request
             while (true) {
@@ -86,9 +86,9 @@ public class ClientHandler implements Runnable {
             }
 
         } catch (EOFException e) {
-            System.out.println("Client disconnesso.");
+            System.out.println("Client disconnected.");
         } catch (IOException | ClassNotFoundException e) {
-            System.err.println("Errore nella comunicazione con il client: " + e.getMessage());
+            System.err.println("Error in communication with client: " + e.getMessage());
         } finally {
             chiudi();
         }
@@ -693,9 +693,9 @@ public class ClientHandler implements Runnable {
             if (ois != null) ois.close();
             if (oos != null) oos.close();
             if (socket != null) socket.close();
-            System.out.println("Connessione client chiusa.");
+            System.out.println("Client connection closed.");
         } catch (IOException e) {
-            System.err.println("Errore durante la chiusura della connessione: " + e.getMessage());
+            System.err.println("Error closing connection: " + e.getMessage());
         }
     }
 }

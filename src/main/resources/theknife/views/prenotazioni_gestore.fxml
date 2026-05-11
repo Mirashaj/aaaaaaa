@@ -5,14 +5,14 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.MenuButton?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.layout.TilePane?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane prefHeight="700.0" prefWidth="1100.0" styleClass="tk-root" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="theknife.client.controller.DashboardGestoreController">
+<BorderPane prefHeight="700.0" prefWidth="1100.0" styleClass="tk-root" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="theknife.client.controller.GestorePrenotazioniController">
    <top>
       <VBox spacing="16.0">
          <children>
@@ -30,9 +30,9 @@
                   <HBox alignment="CENTER_LEFT" spacing="8.0">
                      <children>
                         <Button fx:id="btnNavHome" mnemonicParsing="false" onAction="#handleHome" text="Home" styleClass="tk-nav-item" />
-                        <Button fx:id="btnNavRestaurants" mnemonicParsing="false" onAction="#handleRestaurants" text="Restaurants" styleClass="tk-nav-active" />
+                        <Button fx:id="btnNavRestaurants" mnemonicParsing="false" onAction="#handleRestaurants" text="Restaurants" styleClass="tk-nav-item" />
                         <Button fx:id="btnNavReviews" mnemonicParsing="false" onAction="#handleReviews" text="Review" styleClass="tk-nav-item" />
-                        <Button fx:id="btnNavBookings" mnemonicParsing="false" onAction="#handleBookings" text="Bookings" styleClass="tk-nav-item" visible="false" managed="false" />
+                        <Button fx:id="btnNavBookings" mnemonicParsing="false" onAction="#handleBookings" text="Bookings" styleClass="tk-nav-active" />
                      </children>
                   </HBox>
                   <Region HBox.hgrow="ALWAYS" />
@@ -46,11 +46,10 @@
                      <children>
                         <VBox spacing="4.0" HBox.hgrow="ALWAYS">
                            <children>
-                              <Label fx:id="lblTitolo" text="My restaurants" styleClass="tk-screen-title" />
-                              <Label fx:id="lblSottotitolo" text="Manage your venues and add new ones." styleClass="tk-text-secondary" />
+                              <Label fx:id="lblTitolo" text="Prenotazioni" styleClass="tk-screen-title" />
+                              <Label fx:id="lblSottotitolo" text="Visualizza e gestisci tutte le prenotazioni dei tuoi ristoranti." styleClass="tk-text-secondary" />
                            </children>
                         </VBox>
-                        <Button fx:id="btnNuovoRistorante" mnemonicParsing="false" text="+" prefWidth="48.0" prefHeight="48.0" styleClass="tk-btn-primary" />
                      </children>
                   </HBox>
                </children>
@@ -69,10 +68,13 @@
          <content>
             <VBox spacing="18.0" styleClass="tk-detail-layout">
                <children>
-                  <TilePane fx:id="tileRistoranti" hgap="22.0" vgap="22.0" prefColumns="2" tileAlignment="TOP_LEFT" />
-                  <Label fx:id="lblEmpty" text="You haven't added any restaurants yet" styleClass="tk-text-secondary" visible="false" managed="false" />
+                  <VBox fx:id="vboxPrenotazioni" spacing="12.0" />
+                  <Label fx:id="lblEmpty" text="Non hai ancora ricevuto prenotazioni" styleClass="tk-text-secondary" visible="false" managed="false" />
                   <Label fx:id="lblError" text="" styleClass="tk-text-error" visible="false" managed="false" />
                </children>
+               <padding>
+                  <Insets top="12" right="18" left="18" bottom="18" />
+               </padding>
             </VBox>
          </content>
       </ScrollPane>

@@ -1,6 +1,8 @@
 package theknife.client.controller;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -10,7 +12,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.TextArea;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -20,22 +21,24 @@ import javafx.scene.shape.SVGPath;
 import theknife.client.ClientTK;
 import theknife.client.ServerConnection;
 import theknife.client.SessioneCorrente;
-import theknife.model.Recensione;
+import theknife.model.Prenotazione;
 import theknife.shared.Request;
 import theknife.shared.Response;
 
-public class GestioneRecensioniController {
+public class GestorePrenotazioniController {
 
     @FXML private Label lblTitolo;
     @FXML private Label lblSottotitolo;
     @FXML private Label lblEmpty;
     @FXML private Label lblError;
-    @FXML private VBox vboxRecensioni;
+    @FXML private VBox vboxPrenotazioni;
     @FXML private MenuButton accountMenuButton;
     @FXML private Button btnNavHome;
     @FXML private Button btnNavRestaurants;
     @FXML private Button btnNavReviews;
     @FXML private Button btnNavBookings;
+
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM uuuu HH:mm", Locale.ITALIAN);
 
     @FXML
     public void initialize() {
@@ -48,14 +51,14 @@ public class GestioneRecensioniController {
         updateAccountMenu();
 
         if (lblTitolo != null) {
-            lblTitolo.setText("Recensioni ristoranti");
+            lblTitolo.setText("Prenotazioni");
         }
         if (lblSottotitolo != null) {
-            lblSottotitolo.setText("Rispondi alle recensioni lasciate sui tuoi locali e modifica la tua risposta quando serve.");
+            lblSottotitolo.setText("Visualizza e gestisci tutte le prenotazioni dei tuoi ristoranti.");
         }
 
-        caricaRecensioni();
-        wrapInScrollPane(vboxRecensioni);
+        caricaPrenotazioni();
+        wrapInScrollPane(vboxPrenotazioni);
     }
 
     private void wrapInScrollPane(javafx.scene.Node node) {
@@ -90,8 +93,7 @@ public class GestioneRecensioniController {
         });
     }
 
-
-    private void caricaRecensioni() {
+    private void caricaPrenotazioni() {
         if (lblError != null) {
             lblError.setVisible(false);
             lblError.setManaged(false);
@@ -99,13 +101,13 @@ public class GestioneRecensioniController {
 
         new Thread(() -> {
             try {
-                Request req = new Request("RECENSIONI_GESTORE");
+                Request req = new Request("PRENOTAZIONI_GESTORE");
                 req.addParametro("idGestore", SessioneCorrente.getInstance().getUtenteLoggato().getId());
                 Response res = ServerConnection.getInstance().send(req);
-                if (res.isSuccesso() && vboxRecensioni != null) {
+                if (res.isSuccesso() && vboxPrenotazioni != null) {
                     @SuppressWarnings("unchecked")
-                    List<Recensione> recensioni = (List<Recensione>) res.getPayload();
-                    Platform.runLater(() -> popolaUI(recensioni));
+                    List<Prenotazione> prenotazioni = (List<Prenotazione>) res.getPayload();
+                    Platform.runLater(() -> popolaUI(prenotazioni));
                 } else if (lblError != null) {
                     Platform.runLater(() -> {
                         lblError.setText(res.getMessaggio());
@@ -125,12 +127,12 @@ public class GestioneRecensioniController {
         }).start();
     }
 
-    private void popolaUI(List<Recensione> recensioni) {
-        vboxRecensioni.getChildren().clear();
-        if (recensioni == null) {
-            recensioni = List.of();
+    private void popolaUI(List<Prenotazione> prenotazioni) {
+        vboxPrenotazioni.getChildren().clear();
+        if (prenotazioni == null) {
+            prenotazioni = List.of();
         }
-        boolean empty = recensioni.isEmpty();
+        boolean empty = prenotazioni.isEmpty();
 
         if (lblEmpty != null) {
             lblEmpty.setVisible(empty);
@@ -141,198 +143,154 @@ public class GestioneRecensioniController {
             return;
         }
 
-        for (Recensione recensione : recensioni) {
-            vboxRecensioni.getChildren().add(createReviewCard(recensione));
+        for (Prenotazione prenotazione : prenotazioni) {
+            vboxPrenotazioni.getChildren().add(createBookingCard(prenotazione));
         }
     }
 
-    private VBox createReviewCard(Recensione recensione) {
+    private VBox createBookingCard(Prenotazione prenotazione) {
         VBox card = new VBox(12);
         card.getStyleClass().addAll("tk-review-card", "tk-review-card-detail");
-        card.setMinHeight(220);
+        card.setMinHeight(200);
 
         HBox header = new HBox(10);
         header.setAlignment(Pos.CENTER_LEFT);
 
-        StackPane avatar = new StackPane(new Label(initials(recensione.getNomeUtente())));
+        StackPane avatar = new StackPane(new Label(initials(prenotazione.getNomeUtente())));
         avatar.getStyleClass().add("tk-result-thumb");
         avatar.setPrefSize(42, 42);
         avatar.setMinSize(42, 42);
         avatar.setMaxSize(42, 42);
 
         VBox meta = new VBox(2);
-        Label restaurant = new Label(recensione.getNomeRistorante());
+        Label restaurant = new Label(prenotazione.getNomeRistorante());
         restaurant.getStyleClass().add("tk-card-title");
-        Label user = new Label(recensione.getNomeUtente());
+        Label user = new Label(prenotazione.getNomeUtente());
         user.getStyleClass().add("tk-text-secondary");
         meta.getChildren().addAll(restaurant, user);
 
         Region spacer = new Region();
-        HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
-        Label rating = new Label(stars(recensione.getStelle()));
-        rating.getStyleClass().add("tk-stars");
-        header.getChildren().addAll(avatar, meta, spacer, rating);
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        
+        Label status = new Label(getStatusLabel(prenotazione.getStato()));
+        status.getStyleClass().add(getStatusStyle(prenotazione.getStato()));
+        
+        header.getChildren().addAll(avatar, meta, spacer, status);
 
-        Label date = new Label(recensione.getDataInserimento() != null ? recensione.getDataInserimento().format(java.time.format.DateTimeFormatter.ofPattern("d MMM yyyy")) : "");
-        date.getStyleClass().add("tk-text-secondary");
+        // Date and time
+        Label dateTime = new Label(prenotazione.getDataPrenotazione() != null ? 
+            prenotazione.getDataPrenotazione().format(formatter) : "");
+        dateTime.getStyleClass().add("tk-text-secondary");
 
-        Label text = new Label(recensione.getTesto());
-        text.setWrapText(true);
-        text.getStyleClass().add("tk-text-secondary");
+        // Party size
+        Label partySize = new Label("Persone: " + prenotazione.getNumeroPersone());
+        partySize.getStyleClass().add("tk-text-secondary");
 
-        card.getChildren().addAll(header, date, text);
+        // Notes
+        Label notes = new Label();
+        if (prenotazione.getNoteSpeciali() != null && !prenotazione.getNoteSpeciali().isBlank()) {
+            notes.setText("Note: " + prenotazione.getNoteSpeciali());
+            notes.setWrapText(true);
+            notes.getStyleClass().add("tk-text-secondary");
+        }
+
+        card.getChildren().addAll(header, dateTime, partySize);
+        if (prenotazione.getNoteSpeciali() != null && !prenotazione.getNoteSpeciali().isBlank()) {
+            card.getChildren().add(notes);
+        }
 
         Region vSpacer = new Region();
         vSpacer.setPickOnBounds(false);
         VBox.setVgrow(vSpacer, Priority.ALWAYS);
         card.getChildren().add(vSpacer);
 
-        boolean hasReply = recensione.getRisposta() != null && recensione.getRisposta().getTesto() != null && !recensione.getRisposta().getTesto().isBlank();
-
-        VBox replyPreview = new VBox(4);
-        replyPreview.getStyleClass().add("tk-review-reply");
-        if (hasReply) {
-            Label replyTitle = new Label("La tua risposta");
-            replyTitle.getStyleClass().add("tk-card-title");
-            Label replyText = new Label(recensione.getRisposta().getTesto());
-            replyText.setWrapText(true);
-            replyText.getStyleClass().add("tk-text-secondary");
-            replyPreview.getChildren().addAll(replyTitle, replyText);
-            card.getChildren().add(replyPreview);
-        }
-
+        // Action buttons based on status
         HBox actions = new HBox(8);
         actions.setAlignment(Pos.BOTTOM_RIGHT);
-        Button btnModifica = new Button(hasReply ? "Modifica risposta" : "Rispondi");
-        btnModifica.getStyleClass().add(hasReply ? "tk-btn-secondary" : "tk-btn-primary");
-        actions.getChildren().add(btnModifica);
 
-        Button btnElimina = new Button("Elimina");
-        btnElimina.getStyleClass().add("tk-btn-primary");
-        if (hasReply) {
-            actions.getChildren().add(btnElimina);
+        if ("Pending".equalsIgnoreCase(prenotazione.getStato())) {
+            Button btnAccetta = new Button("Accetta");
+            btnAccetta.getStyleClass().add("tk-btn-primary");
+            btnAccetta.setOnAction(e -> updateBookingStatus(prenotazione, "Confirmed"));
+            
+            Button btnRifiuta = new Button("Rifiuta");
+            btnRifiuta.getStyleClass().add("tk-btn-secondary");
+            btnRifiuta.setOnAction(e -> updateBookingStatus(prenotazione, "Cancelled"));
+            
+            actions.getChildren().addAll(btnAccetta, btnRifiuta);
+        } else if ("Confirmed".equalsIgnoreCase(prenotazione.getStato())) {
+            Button btnAnnulla = new Button("Annulla");
+            btnAnnulla.getStyleClass().add("tk-btn-secondary");
+            btnAnnulla.setOnAction(e -> updateBookingStatus(prenotazione, "Cancelled"));
+            
+            actions.getChildren().add(btnAnnulla);
         }
 
         card.getChildren().add(actions);
-
-        btnModifica.setOnAction(e -> {
-            openReplyEditor(card, recensione, replyPreview, actions, hasReply);
-        });
-
-        btnElimina.setOnAction(e -> {
-            confirmDeleteReply(card, recensione, replyPreview, actions);
-        });
-
         return card;
     }
 
-    private void openReplyEditor(VBox card, Recensione recensione, VBox replyPreview, HBox actions, boolean hasReply) {
-        VBox editor = new VBox(8);
-        TextArea txtRisposta = new TextArea(hasReply ? recensione.getRisposta().getTesto() : "");
-        txtRisposta.setPromptText("Scrivi una risposta...");
-        txtRisposta.setWrapText(true);
-        txtRisposta.setPrefRowCount(3);
-        txtRisposta.getStyleClass().add("tk-input");
-
-        HBox editorActions = new HBox(8);
-        Button btnSalva = new Button("Salva");
-        btnSalva.getStyleClass().add("tk-btn-primary");
-        Button btnAnnulla = new Button("Cancel");
-        btnAnnulla.getStyleClass().add("tk-btn-secondary");
-
-        editorActions.setAlignment(Pos.BOTTOM_RIGHT);
-        editorActions.getChildren().addAll(btnSalva, btnAnnulla);
-        editor.getChildren().addAll(txtRisposta, editorActions);
-
-        int indexActions = card.getChildren().indexOf(actions);
-        if (hasReply) {
-            int indexPreview = card.getChildren().indexOf(replyPreview);
-            card.getChildren().set(indexPreview, editor);
-            card.getChildren().remove(actions);
-        } else {
-            card.getChildren().set(indexActions, editor);
+    private String getStatusLabel(String stato) {
+        if (stato == null) return "Non disponibile";
+        switch (stato.toLowerCase()) {
+            case "pending":
+                return "In attesa";
+            case "confirmed":
+                return "Confermata";
+            case "cancelled":
+                return "Annullata";
+            case "completed":
+                return "Completata";
+            default:
+                return stato;
         }
+    }
 
-        btnAnnulla.setOnAction(e -> {
-            int idx = card.getChildren().indexOf(editor);
-            if (hasReply) {
-                card.getChildren().set(idx, replyPreview);
-                card.getChildren().add(idx + 1, actions);
-            } else {
-                card.getChildren().set(idx, actions);
-            }
-        });
+    private String getStatusStyle(String stato) {
+        if (stato == null) return "tk-badge";
+        switch (stato.toLowerCase()) {
+            case "pending":
+                return "tk-badge-warning";
+            case "confirmed":
+                return "tk-badge-success";
+            case "cancelled":
+                return "tk-badge-error";
+            case "completed":
+                return "tk-badge-info";
+            default:
+                return "tk-badge";
+        }
+    }
 
-        btnSalva.setOnAction(e -> {
-            String newText = txtRisposta.getText().trim();
-            if (newText.isEmpty()) {
-                return;
-            }
-            new Thread(() -> {
-                try {
-                    Request req = new Request("RISPONDI_RECENSIONE");
-                    req.addParametro("idRecensione", recensione.getId());
-                    req.addParametro("idGestore", SessioneCorrente.getInstance().getUtenteLoggato().getId());
-                    req.addParametro("testo", newText);
-
-                    Response res = ServerConnection.getInstance().send(req);
-                    if (res.isSuccesso()) {
-                        Platform.runLater(() -> caricaRecensioni());
-                    } else {
-                        Platform.runLater(() -> {
-                            if (lblError != null) {
-                                lblError.setText(res.getMessaggio());
-                                lblError.setVisible(true);
-                                lblError.setManaged(true);
-                            }
-                        });
-                    }
-                } catch (Exception ex) {
+    private void updateBookingStatus(Prenotazione prenotazione, String newStatus) {
+        new Thread(() -> {
+            try {
+                Request req = new Request("AGGIORNA_PRENOTAZIONE");
+                req.addParametro("idPrenotazione", prenotazione.getId());
+                req.addParametro("stato", newStatus);
+                
+                Response res = ServerConnection.getInstance().send(req);
+                if (res.isSuccesso()) {
+                    Platform.runLater(() -> caricaPrenotazioni());
+                } else {
                     Platform.runLater(() -> {
                         if (lblError != null) {
-                            lblError.setText("Errore di connessione");
+                            lblError.setText(res.getMessaggio());
                             lblError.setVisible(true);
                             lblError.setManaged(true);
                         }
                     });
                 }
-            }).start();
-        });
-    }
-
-    private void confirmDeleteReply(VBox card, Recensione recensione, VBox replyPreview, HBox actions) {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Sei sicuro di voler eliminare questa risposta?", javafx.scene.control.ButtonType.YES, javafx.scene.control.ButtonType.NO);
-        alert.setTitle("Conferma eliminazione");
-        alert.showAndWait().ifPresent(b -> {
-            if (b == javafx.scene.control.ButtonType.YES) {
-                new Thread(() -> {
-                    try {
-                        Request req = new Request("ELIMINA_RISPOSTA");
-                        req.addParametro("idRisposta", recensione.getRisposta().getId());
-                        Response res = ServerConnection.getInstance().send(req);
-                        if (res.isSuccesso()) {
-                            Platform.runLater(() -> caricaRecensioni());
-                        } else {
-                            Platform.runLater(() -> {
-                                if (lblError != null) {
-                                    lblError.setText(res.getMessaggio());
-                                    lblError.setVisible(true);
-                                    lblError.setManaged(true);
-                                }
-                            });
-                        }
-                    } catch (Exception e) {
-                        Platform.runLater(() -> {
-                            if (lblError != null) {
-                                lblError.setText("Errore di connessione");
-                                lblError.setVisible(true);
-                                lblError.setManaged(true);
-                            }
-                        });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    if (lblError != null) {
+                        lblError.setText("Errore di connessione");
+                        lblError.setVisible(true);
+                        lblError.setManaged(true);
                     }
-                }).start();
+                });
             }
-        });
+        }).start();
     }
 
     private String initials(String name) {
@@ -346,13 +304,6 @@ public class GestioneRecensioniController {
         return (parts[0].substring(0, 1) + parts[parts.length - 1].substring(0, 1)).toUpperCase();
     }
 
-    private String stars(int value) {
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < 5; i++) {
-            builder.append(i < value ? '★' : '☆');
-        }
-        return builder.toString();
-    }
     private void configureNavbar() {
         if (btnNavHome != null) {
             btnNavHome.setText("Home");
@@ -364,14 +315,11 @@ public class GestioneRecensioniController {
         }
         if (btnNavReviews != null) {
             btnNavReviews.setText("Review");
-            btnNavReviews.getStyleClass().setAll("tk-nav-active");
+            btnNavReviews.getStyleClass().setAll("tk-nav-item");
         }
         if (btnNavBookings != null) {
             btnNavBookings.setText("Bookings");
-            btnNavBookings.getStyleClass().setAll("tk-nav-item");
-            btnNavBookings.setVisible(true);
-            btnNavBookings.setManaged(true);
-            btnNavBookings.setOnAction(e -> handleBookings());
+            btnNavBookings.getStyleClass().setAll("tk-nav-active");
         }
     }
 
@@ -393,10 +341,8 @@ public class GestioneRecensioniController {
             alert.showAndWait();
         });
         MenuItem logout = new MenuItem("Logout");
-        logout.setOnAction(e -> {
-            SessioneCorrente.getInstance().logout();
-            ClientTK.loadScene("welcome.fxml", "TheKnife - Welcome");
-        });
+        logout.setOnAction(e -> handleLogout());
+
         accountMenuButton.getItems().addAll(settings, logout);
     }
 
@@ -409,9 +355,13 @@ public class GestioneRecensioniController {
         return icon;
     }
 
-    @FXML private void handleIndietro() { ClientTK.loadScene("dashboard_gestore.fxml", "TheKnife - Dashboard"); }
     @FXML private void handleHome() { ClientTK.loadScene("home.fxml", "TheKnife - Home"); }
     @FXML private void handleRestaurants() { ClientTK.loadScene("dashboard_gestore.fxml", "TheKnife - Dashboard"); }
     @FXML private void handleReviews() { ClientTK.loadScene("gestione_recensioni.fxml", "TheKnife - Review Management"); }
     @FXML private void handleBookings() { ClientTK.loadScene("prenotazioni_gestore.fxml", "TheKnife - Bookings"); }
+    @FXML private void handleLogout() {
+        try { ServerConnection.getInstance().send(new Request("DISCONNECT")); ServerConnection.getInstance().disconnect(); } catch (Exception e) {}
+        SessioneCorrente.getInstance().logout();
+        ClientTK.loadScene("welcome.fxml", "TheKnife - Welcome");
+    }
 }
