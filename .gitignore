@@ -29,4 +29,5 @@ _tmp/
 # File di sistema
 .DS_Store
 Thumbs.db
+*.md
 

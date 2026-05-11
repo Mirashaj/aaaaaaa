@@ -26,7 +26,7 @@
                <children>
                   <Label text="TheKnife" styleClass="tk-welcome-brand-text" />
                </children>
-            </HBox>   
+            </HBox>
             <Region HBox.hgrow="ALWAYS" />
          </children>
       </HBox>
@@ -45,8 +45,8 @@
          <VBox alignment="CENTER" spacing="32.0" maxWidth="520.0" styleClass="tk-welcome-header">
             <Label text="Welcome to TheKnife" textAlignment="CENTER" wrapText="true" styleClass="tk-welcome-title" />
             <Label text="Find the best restaurants in the world. Book, review, discover." textAlignment="CENTER" wrapText="true" maxWidth="320.0" styleClass="tk-welcome-subtitle" />
-         </VBox>      
-            
+         </VBox>
+
             <VBox alignment="CENTER" spacing="12.0" maxWidth="380.0">
                <children>
 

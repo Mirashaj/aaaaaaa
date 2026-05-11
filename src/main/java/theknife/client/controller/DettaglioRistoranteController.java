@@ -436,7 +436,7 @@ public class DettaglioRistoranteController {
         if (lblMessaggio != null) {
             lblMessaggio.setText("Review cancelled.");
         }
-        // Reset stars and text
+        // Resetta stelle e testo
         selectedRating = 5;
         updateStarDisplay(5);
         if (txtTestoRecensione != null) {
