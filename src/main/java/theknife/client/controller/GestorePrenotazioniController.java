@@ -150,8 +150,8 @@ public class GestorePrenotazioniController {
 
     private VBox createBookingCard(Prenotazione prenotazione) {
         VBox card = new VBox(12);
-        card.getStyleClass().addAll("tk-review-card", "tk-review-card-detail");
-        card.setMinHeight(200);
+        card.getStyleClass().add("tk-booking-card");
+        card.getStyleClass().add("tk-booking-card-owner");
 
         HBox header = new HBox(10);
         header.setAlignment(Pos.CENTER_LEFT);
@@ -171,14 +171,14 @@ public class GestorePrenotazioniController {
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        
+
         Label status = new Label(getStatusLabel(prenotazione.getStato()));
         status.getStyleClass().add(getStatusStyle(prenotazione.getStato()));
-        
+
         header.getChildren().addAll(avatar, meta, spacer, status);
 
         // Date and time
-        Label dateTime = new Label(prenotazione.getDataPrenotazione() != null ? 
+        Label dateTime = new Label(prenotazione.getDataPrenotazione() != null ?
             prenotazione.getDataPrenotazione().format(formatter) : "");
         dateTime.getStyleClass().add("tk-text-secondary");
 
@@ -208,21 +208,21 @@ public class GestorePrenotazioniController {
         HBox actions = new HBox(8);
         actions.setAlignment(Pos.BOTTOM_RIGHT);
 
-        if ("Pending".equalsIgnoreCase(prenotazione.getStato())) {
+        if ("Pending".equalsIgnoreCase(prenotazione.getStato()) || "IN_ATTESA".equalsIgnoreCase(prenotazione.getStato())) {
             Button btnAccetta = new Button("Accetta");
             btnAccetta.getStyleClass().add("tk-btn-primary");
-            btnAccetta.setOnAction(e -> updateBookingStatus(prenotazione, "Confirmed"));
-            
+            btnAccetta.setOnAction(e -> updateBookingStatus(prenotazione, "CONFERMATA"));
+
             Button btnRifiuta = new Button("Rifiuta");
             btnRifiuta.getStyleClass().add("tk-btn-secondary");
-            btnRifiuta.setOnAction(e -> updateBookingStatus(prenotazione, "Cancelled"));
-            
+            btnRifiuta.setOnAction(e -> updateBookingStatus(prenotazione, "ANNULLATA"));
+
             actions.getChildren().addAll(btnAccetta, btnRifiuta);
-        } else if ("Confirmed".equalsIgnoreCase(prenotazione.getStato())) {
+        } else if ("Confirmed".equalsIgnoreCase(prenotazione.getStato()) || "CONFERMATA".equalsIgnoreCase(prenotazione.getStato())) {
             Button btnAnnulla = new Button("Annulla");
             btnAnnulla.getStyleClass().add("tk-btn-secondary");
-            btnAnnulla.setOnAction(e -> updateBookingStatus(prenotazione, "Cancelled"));
-            
+            btnAnnulla.setOnAction(e -> updateBookingStatus(prenotazione, "ANNULLATA"));
+
             actions.getChildren().add(btnAnnulla);
         }
 
@@ -234,12 +234,16 @@ public class GestorePrenotazioniController {
         if (stato == null) return "Non disponibile";
         switch (stato.toLowerCase()) {
             case "pending":
+            case "in_attesa":
                 return "In attesa";
             case "confirmed":
+            case "confermata":
                 return "Confermata";
             case "cancelled":
+            case "annullata":
                 return "Annullata";
             case "completed":
+            case "completata":
                 return "Completata";
             default:
                 return stato;
@@ -250,12 +254,16 @@ public class GestorePrenotazioniController {
         if (stato == null) return "tk-badge";
         switch (stato.toLowerCase()) {
             case "pending":
+            case "in_attesa":
                 return "tk-badge-warning";
             case "confirmed":
+            case "confermata":
                 return "tk-badge-success";
             case "cancelled":
+            case "annullata":
                 return "tk-badge-error";
             case "completed":
+            case "completata":
                 return "tk-badge-info";
             default:
                 return "tk-badge";
@@ -265,10 +273,13 @@ public class GestorePrenotazioniController {
     private void updateBookingStatus(Prenotazione prenotazione, String newStatus) {
         new Thread(() -> {
             try {
-                Request req = new Request("AGGIORNA_PRENOTAZIONE");
+                Request req = new Request("MODIFICA_PRENOTAZIONE");
+                req.addParametro("idUtente", prenotazione.getIdUtente());
                 req.addParametro("idPrenotazione", prenotazione.getId());
+                req.addParametro("dataPrenotazione", prenotazione.getDataPrenotazione());
+                req.addParametro("posti", prenotazione.getPosti());
                 req.addParametro("stato", newStatus);
-                
+
                 Response res = ServerConnection.getInstance().send(req);
                 if (res.isSuccesso()) {
                     Platform.runLater(() -> caricaPrenotazioni());

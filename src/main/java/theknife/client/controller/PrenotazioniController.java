@@ -117,10 +117,9 @@ public class PrenotazioniController {
 
     private VBox createBookingCard(Prenotazione p) {
         VBox card = new VBox(10);
-        card.getStyleClass().addAll("tk-review-card", "tk-review-card-detail");
-        // larger card size to match layout (allow up to 4 cards per row)
+        card.getStyleClass().add("tk-booking-card");
         card.setPrefWidth(380);
-        card.setPrefHeight(200);
+        card.setPrefHeight(160);
 
 
         HBox header = new HBox(10);

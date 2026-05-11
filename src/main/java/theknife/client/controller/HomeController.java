@@ -190,8 +190,10 @@ public class HomeController {
 
         if (btnNavFourth != null) {
             if (gestore) {
-                btnNavFourth.setVisible(false);
-                btnNavFourth.setManaged(false);
+                btnNavFourth.setVisible(true);
+                btnNavFourth.setManaged(true);
+                btnNavFourth.setText("Bookings");
+                btnNavFourth.getStyleClass().setAll("tk-nav-item");
             } else {
                 btnNavFourth.setVisible(true);
                 btnNavFourth.setManaged(true);
@@ -265,7 +267,7 @@ public class HomeController {
     @FXML
     private void handlePrenotazioni() {
         if (SessioneCorrente.getInstance().isGestore()) {
-            ClientTK.loadScene("dashboard_gestore.fxml", "TheKnife - Dashboard");
+            ClientTK.loadScene("prenotazioni_gestore.fxml", "TheKnife - Bookings");
             return;
         }
         ClientTK.loadScene("prenotazioni.fxml", "TheKnife - Bookings");

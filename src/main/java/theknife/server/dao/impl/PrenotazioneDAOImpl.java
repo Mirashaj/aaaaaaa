@@ -69,6 +69,41 @@ public class PrenotazioneDAOImpl implements PrenotazioneDAO {
     }
 
     @Override
+    public List<Prenotazione> findByGestore(int idGestore) {
+        List<Prenotazione> risultati = new ArrayList<>();
+        String query = "SELECT p.*, r.nome AS nome_ristorante, u.nome AS nome_utente " +
+                       "FROM Prenotazioni p " +
+                       "JOIN RistorantiTheKnife r ON r.id = p.id_ristorante " +
+                       "LEFT JOIN Utenti u ON u.id = p.id_utente " +
+                       "WHERE r.id_gestore = ? " +
+                       "ORDER BY p.data_prenotazione DESC";
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setInt(1, idGestore);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                Prenotazione p = new Prenotazione();
+                p.setId(rs.getInt("id"));
+                p.setIdUtente(rs.getInt("id_utente"));
+                p.setIdRistorante(rs.getInt("id_ristorante"));
+                Timestamp ts = rs.getTimestamp("data_prenotazione");
+                if (ts != null) p.setDataPrenotazione(ts.toLocalDateTime());
+                p.setPosti(rs.getInt("posti"));
+                p.setStato(rs.getString("stato"));
+                p.setNomeRistorante(rs.getString("nome_ristorante"));
+                p.setNomeUtente(rs.getString("nome_utente"));
+                risultati.add(p);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return risultati;
+    }
+
+    @Override
     public Prenotazione inserisci(Prenotazione p) {
         String query = "INSERT INTO Prenotazioni (id_utente, id_ristorante, data_prenotazione, posti, stato) " +
                        "VALUES (?, ?, ?, ?, ?) RETURNING id";

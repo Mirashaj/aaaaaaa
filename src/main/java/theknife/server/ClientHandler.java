@@ -6,6 +6,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.mindrot.jbcrypt.BCrypt;
@@ -102,12 +103,13 @@ public class ClientHandler implements Runnable {
      */
     private Response elaboraRequest(Request request) {
         String tipo = request.getTipo();
+        String tipoNormalized = tipo == null ? "" : tipo.trim().toUpperCase(Locale.ROOT);
         Map<String, Object> params = request.getParametri();
 
-        System.out.println("[DEBUG] Received request type: " + tipo);
+        System.out.println("[DEBUG] Received request type: " + tipo + " (normalized: " + tipoNormalized + ")");
 
         try {
-            switch (tipo) {
+            switch (tipoNormalized) {
                 case "LOGIN":
                     return handleLogin(params);
 
@@ -176,6 +178,9 @@ public class ClientHandler implements Runnable {
 
                 case "VISUALIZZA_PRENOTAZIONI":
                     return handleVisualizzaPrenotazioni(params);
+
+                case "PRENOTAZIONI_GESTORE":
+                    return handlePrenotazioniGestore(params);
 
                 case "ELIMINA_PRENOTAZIONE":
                     return handleEliminaPrenotazione(params);
@@ -615,6 +620,19 @@ public class ClientHandler implements Runnable {
             }
             java.util.List<Prenotazione> lista = prenotazioneDAO.findByUtente(idUtente);
             return new Response(true, "Prenotazioni recuperate.", lista);
+        } catch (Exception e) {
+            return new Response(false, "Errore: " + e.getMessage(), null);
+        }
+    }
+
+    private Response handlePrenotazioniGestore(Map<String, Object> params) {
+        try {
+            Integer idGestore = (Integer) params.get("idGestore");
+            if (idGestore == null) {
+                return new Response(false, "ID gestore mancante.", null);
+            }
+            java.util.List<Prenotazione> lista = prenotazioneDAO.findByGestore(idGestore);
+            return new Response(true, "Prenotazioni gestore recuperate.", lista);
         } catch (Exception e) {
             return new Response(false, "Errore: " + e.getMessage(), null);
         }
